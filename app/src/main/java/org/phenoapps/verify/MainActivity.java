@@ -554,6 +554,9 @@ public class MainActivity extends AppCompatActivity {
 
     private synchronized void askUserExportFileName() {
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose name for exported file.");
+        final EditText input = new EditText(this);
 
         final Calendar c = Calendar.getInstance();
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -561,18 +564,37 @@ public class MainActivity extends AppCompatActivity {
         int lastDot = mFileName.lastIndexOf('.');
         if (lastDot != -1) {
             mFileName = mFileName.substring(0, lastDot);
-        }
 
-        final Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        i.setType("*/*");
-        i.putExtra(Intent.EXTRA_TITLE, mFileName + "_" + sdf.format(c.getTime())+".csv");
-        startActivityForResult(Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST);
+        }
+        input.setText(mFileName + "_" + sdf.format(c.getTime()));
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+       builder.setPositiveButton("Export", new DialogInterface.OnClickListener() {
+           @Override
+           public void onClick(DialogInterface dialogInterface, int which) {
+               String value = input.getText().toString();
+               final Intent i;
+               if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                   i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                   i.setType("*/*");
+                   i.putExtra(Intent.EXTRA_TITLE, value+".csv");
+                   startActivityForResult(Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST);
+               }
+           }
+       });
+       builder.show();
 
     }
 
     public void writeToExportPath(Uri uri){
 
         String value = mFileName;
+
+        if (uri == null){
+            Toast.makeText(this, "Unable to open the Specified file", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if (!value.isEmpty()) {
             if (isExternalStorageWritable()) {
@@ -616,7 +638,11 @@ public class MainActivity extends AppCompatActivity {
                                     Log.v("scan complete", path);
                                 }
                             });*/
-                } catch (SQLiteException e) {
+                }catch (NullPointerException npe){
+                    npe.printStackTrace();
+                    Toast.makeText(this, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
+                }
+                catch (SQLiteException e) {
                     e.printStackTrace();
                     Toast.makeText(MainActivity.this, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
