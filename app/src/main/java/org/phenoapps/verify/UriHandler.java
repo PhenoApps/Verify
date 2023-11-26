@@ -143,7 +143,6 @@ public class UriHandler {
     public String getLocalPath(final Context context , Uri uri) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            Log.d("authority", "getLocalPath: "+uri.getAuthority());
             if (DocumentsContract.isDocumentUri(context, uri)) {
 
                 if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {

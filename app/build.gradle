@@ -8,7 +8,7 @@ android {
     buildToolsVersion '28.0.3'
     defaultConfig {
         applicationId "org.phenoapps.verify"
-        minSdkVersion 19
+        minSdkVersion 16
         targetSdkVersion 31
         versionCode 2
         versionName "1.1"
