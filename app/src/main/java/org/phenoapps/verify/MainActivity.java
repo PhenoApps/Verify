@@ -11,22 +11,20 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteStatement;
 import android.media.MediaPlayer;
 import android.media.MediaScannerConnection;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
+import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.annotation.NonNull;
+import com.google.android.material.navigation.NavigationView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -40,9 +38,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,15 +49,12 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import org.phenoapps.verify.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -563,78 +558,168 @@ public class MainActivity extends AppCompatActivity {
         if (lastDot != -1) {
             mFileName = mFileName.substring(0, lastDot);
         }
-        input.setText(mFileName + "_" + sdf.format(c.getTime()));
+        input.setText("Verify_"+ sdf.format(c.getTime()));
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        builder.setPositiveButton("Export", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String value = input.getText().toString();
-                if (!value.isEmpty()) {
-                    if (isExternalStorageWritable()) {
-                        try {
-                            File verifyDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/Verify");
-                            final File output = new File(verifyDirectory, value + ".csv");
-                            final FileOutputStream fstream = new FileOutputStream(output);
-                            final SQLiteDatabase db = mDbHelper.getReadableDatabase();
-                            final String table = IdEntryContract.IdEntry.TABLE_NAME;
-                            final Cursor cursor = db.query(table, null, null, null, null, null, null);
-                            //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
+       builder.setPositiveButton("Export", new DialogInterface.OnClickListener() {
+           @Override
+           public void onClick(DialogInterface dialogInterface, int which) {
+               String value = input.getText().toString();
+               mFileName = value;
+               final Intent i;
+               if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                   i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                   i.setType("*/*");
+                   i.putExtra(Intent.EXTRA_TITLE, value+".csv");
+                   startActivityForResult(Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST);
+               }else{
+                   writeToExportPath();
+               }
+           }
+       });
+       builder.show();
+    }
 
-                            //first write header line
-                            final String[] headers = cursor.getColumnNames();
+    public void writeToExportPath(){
+        String value = mFileName;
+
+        if (!value.isEmpty()) {
+            if (isExternalStorageWritable()) {
+                try {
+                    File verifyDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/Verify");
+                    final File output = new File(verifyDirectory, value + ".csv");
+                    final FileOutputStream fstream = new FileOutputStream(output);
+                    final SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                    final String table = IdEntryContract.IdEntry.TABLE_NAME;
+                    final Cursor cursor = db.query(table, null, null, null, null, null, null);
+                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
+
+                    //first write header line
+                    final String[] headers = cursor.getColumnNames();
+                    for (int i = 0; i < headers.length; i++) {
+                        if (i != 0) fstream.write(",".getBytes());
+                        fstream.write(headers[i].getBytes());
+                    }
+                    fstream.write(line_separator.getBytes());
+                    //populate text file with current database values
+                    if (cursor.moveToFirst()) {
+                        do {
                             for (int i = 0; i < headers.length; i++) {
                                 if (i != 0) fstream.write(",".getBytes());
-                                fstream.write(headers[i].getBytes());
+                                final String val = cursor.getString(
+                                        cursor.getColumnIndexOrThrow(headers[i])
+                                );
+                                if (val == null) fstream.write("null".getBytes());
+                                else fstream.write(val.getBytes());
                             }
                             fstream.write(line_separator.getBytes());
-                            //populate text file with current database values
-                            if (cursor.moveToFirst()) {
-                                do {
-                                    for (int i = 0; i < headers.length; i++) {
-                                        if (i != 0) fstream.write(",".getBytes());
-                                        final String val = cursor.getString(
-                                                cursor.getColumnIndexOrThrow(headers[i])
-                                        );
-                                        if (val == null) fstream.write("null".getBytes());
-                                        else fstream.write(val.getBytes());
-                                    }
-                                    fstream.write(line_separator.getBytes());
-                                } while (cursor.moveToNext());
-                            }
+                        } while (cursor.moveToNext());
+                    }
 
-                            cursor.close();
-                            fstream.flush();
-                            fstream.close();
-                            scanFile(MainActivity.this, output);
+                    cursor.close();
+                    fstream.flush();
+                    fstream.close();
+                    scanFile(MainActivity.this, output);
                             /*MediaScannerConnection.scanFile(MainActivity.this, new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
                                 @Override
                                 public void onScanCompleted(String path, Uri uri) {
                                     Log.v("scan complete", path);
                                 }
                             });*/
-                        } catch (SQLiteException e) {
-                            e.printStackTrace();
-                            Toast.makeText(MainActivity.this, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException io) {
-                            io.printStackTrace();
-                        }
-                    } else {
-                        Toast.makeText(MainActivity.this,
-                                "External storage not writable.", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(MainActivity.this,
-                            "Must enter a file name.", Toast.LENGTH_SHORT).show();
+                }catch (NullPointerException npe){
+                    npe.printStackTrace();
+                    Toast.makeText(this, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
                 }
+                catch (SQLiteException e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException io) {
+                    io.printStackTrace();
+                }
+            } else {
+                Toast.makeText(MainActivity.this,
+                        "External storage not writable.", Toast.LENGTH_SHORT).show();
             }
-        });
+        } else {
+            Toast.makeText(MainActivity.this,
+                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
+        }
+    }
 
-        builder.show();
+    public void writeToExportPath(Uri uri){
 
+        String value = mFileName;
+
+        if (uri == null){
+            Toast.makeText(this, "Unable to open the Specified file", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (!value.isEmpty()) {
+            if (isExternalStorageWritable()) {
+                try {
+                    final File output = new File(uri.getPath());
+                    final OutputStream fstream = getContentResolver().openOutputStream(uri);
+                    final SQLiteDatabase db = mDbHelper.getReadableDatabase();
+                    final String table = IdEntryContract.IdEntry.TABLE_NAME;
+                    final Cursor cursor = db.query(table, null, null, null, null, null, null);
+                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
+
+                    //first write header line
+                    final String[] headers = cursor.getColumnNames();
+                    for (int i = 0; i < headers.length; i++) {
+                        if (i != 0) fstream.write(",".getBytes());
+                        fstream.write(headers[i].getBytes());
+                    }
+                    fstream.write(line_separator.getBytes());
+                    //populate text file with current database values
+                    if (cursor.moveToFirst()) {
+                        do {
+                            for (int i = 0; i < headers.length; i++) {
+                                if (i != 0) fstream.write(",".getBytes());
+                                final String val = cursor.getString(
+                                        cursor.getColumnIndexOrThrow(headers[i])
+                                );
+                                if (val == null) fstream.write("null".getBytes());
+                                else fstream.write(val.getBytes());
+                            }
+                            fstream.write(line_separator.getBytes());
+                        } while (cursor.moveToNext());
+                    }
+
+                    cursor.close();
+                    fstream.flush();
+                    fstream.close();
+                    scanFile(MainActivity.this, output);
+                            /*MediaScannerConnection.scanFile(MainActivity.this, new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
+                                @Override
+                                public void onScanCompleted(String path, Uri uri) {
+                                    Log.v("scan complete", path);
+                                }
+                            });*/
+                }catch (NullPointerException npe){
+                    npe.printStackTrace();
+                    Toast.makeText(this, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
+                }
+                catch (SQLiteException e) {
+                    e.printStackTrace();
+                    Toast.makeText(MainActivity.this, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException io) {
+                    io.printStackTrace();
+                }
+            } else {
+                Toast.makeText(MainActivity.this,
+                        "External storage not writable.", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(MainActivity.this,
+                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     //returns index of table with identifier = id, returns -1 if not found
@@ -728,30 +813,30 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     final public boolean onOptionsItemSelected(MenuItem item) {
-
-        DrawerLayout dl = (DrawerLayout) findViewById(org.phenoapps.verify.R.id.drawer_layout);
+        DrawerLayout dl = (DrawerLayout) findViewById(R.id.drawer_layout);
+        int actionCamera = R.id.action_camera;
+        int actionCompare = R.id.action_compare;
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
         }
 
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                dl.openDrawer(GravityCompat.START);
-                break;
-            case org.phenoapps.verify.R.id.action_camera:
-                final Intent cameraIntent = new Intent(this, ScanActivity.class);
-                startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
-                break;
-            case R.id.action_compare:
-                final Intent compareIntent = new Intent(MainActivity.this, CompareActivity.class);
-                runOnUiThread(new Runnable() {
-                    @Override public void run() {
-                        startActivity(compareIntent);
-                    }
-                });
-                break;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == android.R.id.home){
+            dl.openDrawer(GravityCompat.START);
+        }
+        else if(item.getItemId() == actionCamera){
+            final Intent cameraIntent = new Intent(this, ScanActivity.class);
+            startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
+        }
+        else if(item.getItemId() == actionCompare){
+            final Intent compareIntent = new Intent(MainActivity.this, CompareActivity.class);
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    startActivity(compareIntent);
+                }
+            });
+        }
+        else{
+            return super.onOptionsItemSelected(item);
         }
         return true;
     }
@@ -765,6 +850,9 @@ public class MainActivity extends AppCompatActivity {
 
             if (intent != null) {
                 switch (requestCode) {
+                    case VerifyConstants.PICK_CUSTOM_DEST:
+                        writeToExportPath(intent.getData());
+                        break;
                     case VerifyConstants.DEFAULT_CONTENT_REQ:
                         Intent i = new Intent(this, LoaderDBActivity.class);
                         i.setData(intent.getData());
@@ -878,37 +966,75 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void selectDrawerItem(MenuItem menuItem) {
-        switch (menuItem.getItemId()) {
+        int itemId = menuItem.getItemId();
+        // constants like id in R class are no longer final, thus can't use switch here
 
-            case org.phenoapps.verify.R.id.nav_import:
-                final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                final int scanMode = Integer.valueOf(sharedPref.getString(SettingsActivity.SCAN_MODE_LIST, "-1"));
+        if (itemId == R.id.nav_import){
+            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            final int scanMode = Integer.valueOf(sharedPref.getString(SettingsActivity.SCAN_MODE_LIST, "-1"));
+            final Intent i;
+            File verifyDirectory = new File(getExternalFilesDir(null), "/Verify");
 
-                final Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-                i.setType("*/*");
-                startActivityForResult(Intent.createChooser(i, "Choose file to import."), VerifyConstants.DEFAULT_CONTENT_REQ);
+            File[] files = verifyDirectory.listFiles();
 
-                break;
-            case org.phenoapps.verify.R.id.nav_settings:
-                final Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                startActivityForResult(settingsIntent, VerifyConstants.SETTINGS_INTENT_REQ);
-                break;
-            case org.phenoapps.verify.R.id.nav_export:
-                askUserExportFileName();
-                break;
-            case org.phenoapps.verify.R.id.nav_about:
-                showAboutDialog();
-                break;
-            case org.phenoapps.verify.R.id.nav_intro:
-                final Intent intro_intent = new Intent(MainActivity.this, IntroActivity.class);
-                runOnUiThread(new Runnable() {
-                    @Override public void run() {
-                        startActivity(intro_intent);
-                    }
-                });
-                break;
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Select files from?");
+            builder.setPositiveButton("Storage",
+                    new DialogInterface.OnClickListener()
+                    {
+                        public void onClick(DialogInterface dialog, int id)
+                        {
+                            Intent i;
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                                i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                            }else{
+                                i = new Intent(Intent.ACTION_GET_CONTENT);
+                            }
+                            i.setType("*/*");
+                            startActivityForResult(Intent.createChooser(i, "Choose file to import."), VerifyConstants.DEFAULT_CONTENT_REQ);
+                        }
+                    });
+
+            builder.setNegativeButton("Verify Directory",
+                    new DialogInterface.OnClickListener()
+                    {
+                        public void onClick(DialogInterface dialog, int id)
+                        {
+
+                            AlertDialog.Builder fileBuilder = new AlertDialog.Builder(MainActivity.this);
+                            fileBuilder.setTitle("Select the sample file");
+                            final int[] checkedItem = {-1};
+                            String[] listItems = verifyDirectory.list();
+                            fileBuilder.setSingleChoiceItems(listItems, checkedItem[0],(fileDialog, which) -> {
+                                checkedItem[0] = which;
+
+                                Intent i = new Intent(MainActivity.this, LoaderDBActivity.class);
+                                i.setData(Uri.fromFile(files[which]));
+                                startActivityForResult(i, VerifyConstants.LOADER_INTENT_REQ);
+                                fileDialog.dismiss();
+                            });
+
+                            fileBuilder.show();
+
+                        }
+                    });
+            builder.show();
+        } else if (itemId == R.id.nav_settings) {
+            final Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivityForResult(settingsIntent, VerifyConstants.SETTINGS_INTENT_REQ);
+        } else if (itemId == R.id.nav_export) {
+            askUserExportFileName();
+        } else if (itemId == R.id.nav_about) {
+            showAboutDialog();
+        } else if (itemId == R.id.nav_intro) {
+            final Intent intro_intent = new Intent(MainActivity.this, IntroActivity.class);
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    startActivity(intro_intent);
+                }
+            });
         }
-
         DrawerLayout dl = (DrawerLayout) findViewById(org.phenoapps.verify.R.id.drawer_layout);
         dl.closeDrawers();
     }
@@ -1042,6 +1168,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int resultCode, String[] permissions, int[] granted) {
 
+        super.onRequestPermissionsResult(resultCode, permissions, granted);
         boolean externalWriteAccept = false;
         if (resultCode == VerifyConstants.PERM_REQ) {
             for (int i = 0; i < permissions.length; i++) {
@@ -1051,7 +1178,9 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (externalWriteAccept && isExternalStorageWritable()) {
-            File verifyDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/Verify");
+
+            File verifyDirectory = new File(getExternalFilesDir(null), "/Verify");
+
             if (!verifyDirectory.isDirectory()) {
                 final boolean makeDirsSuccess = verifyDirectory.mkdirs();
                 if (!makeDirsSuccess) Log.d("Verify Make Directory", "failed");

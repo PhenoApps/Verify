@@ -1,24 +1,16 @@
 package org.phenoapps.verify;
 
-import android.content.ContentUris;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.DocumentsContract;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -43,8 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.Iterator;
-
-import org.phenoapps.verify.R;
+import java.util.Objects;
 
 public class LoaderDBActivity extends AppCompatActivity {
 
@@ -53,7 +44,6 @@ public class LoaderDBActivity extends AppCompatActivity {
     private Uri mFileUri;
     private String mDelimiter;
     private String mFileExtension;
-    private String mFilePath;
     private String mFileName;
 
     private Workbook mCurrentWorkbook;
@@ -105,7 +95,12 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         mFileUri = getIntent().getData();
 
-        int lastSlash = mFileUri.getPath().lastIndexOf('/');
+        if (mFileUri == null ){
+            Toast.makeText(this, "There was a problem reading this file", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        int lastSlash = Objects.requireNonNull(mFileUri.getPath()).lastIndexOf('/');
         if (lastSlash != -1) {
             mFileName = mFileUri.getPath().substring(lastSlash + 1);
         } else mFileName = "";
@@ -135,16 +130,17 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         try {
             //query file path type
-            mFilePath = getPath(mFileUri);
-            int lastDot = mFileUri.toString().lastIndexOf(".");
+//            mFilePath = getPath(LoaderDBActivity.this ,mFileUri);
+            String mFilePath = UriHandler.getPath(LoaderDBActivity.this, mFileUri);
+            int lastDot = mFilePath.lastIndexOf("."); // changed from mFileUri to mFilePath due to the files in download folder have URI without extension
 
             if (lastDot == -1) {
                 Toast.makeText(this, "Imported file must have an extension. (e.g: .csv, .tsv)", Toast.LENGTH_LONG).show();
                 finish();
             }
 
-            mFileExtension = mFileUri.toString().substring(lastDot + 1);
 
+            mFileExtension = mFilePath.substring(lastDot + 1);
             StringBuilder header = new StringBuilder();
 
             //xls library support
@@ -530,60 +526,5 @@ public class LoaderDBActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-
-    //based on https://github.com/iPaulPro/aFileChooser/blob/master/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
-    public String getPath(Uri uri) {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-
-            if (DocumentsContract.isDocumentUri(LoaderDBActivity.this, uri)) {
-
-                if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {
-                    final String[] doc =  DocumentsContract.getDocumentId(uri).split(":");
-                    final String documentType = doc[0];
-
-                    if ("primary".equalsIgnoreCase(documentType)) {
-                        return Environment.getExternalStorageDirectory() + "/" + doc[1];
-                    }
-                }
-                else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
-                    final String id = DocumentsContract.getDocumentId(uri);
-                    if (!id.isEmpty()) {
-                        if (id.startsWith("raw:")) {
-                            return id.replaceFirst("raw:", "");
-                        }
-                    }
-                    final Uri contentUri = ContentUris.withAppendedId(
-                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-                    return getDataColumn(LoaderDBActivity.this, contentUri, null, null);
-                }
-            }
-            else if ("file".equalsIgnoreCase(uri.getScheme())) {
-                return uri.getPath();
-            } else if ("com.estrongs.files".equals(uri.getAuthority())) {
-                return uri.getPath();
-            }
-        }
-        return null;
-    }
-
-    public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
-
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = { column };
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                final int index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(index);
-            }
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return null;
     }
 }
