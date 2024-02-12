@@ -445,10 +445,9 @@ boolean displayAux = sharedPref.getBoolean(SettingsActivity.AUX_INFO, true);
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault());
 
         if (sqlUpdateUserAndDate != null) { //no db yet
-            String firstName = sharedPref.getString(SettingsActivity.FIRST_NAME, "");
-            String lastName = sharedPref.getString(SettingsActivity.LAST_NAME, "");
+            String name = sharedPref.getString(SettingsActivity.NAME, "");
             sqlUpdateUserAndDate.bindAllArgsAsStrings(new String[]{
-                    firstName + " " + lastName,
+                    name,
                     sdf.format(c.getTime()),
                     id
             });
