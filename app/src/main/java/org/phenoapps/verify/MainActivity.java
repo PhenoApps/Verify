@@ -345,7 +345,7 @@ boolean displayAux = sharedPref.getBoolean(SettingsActivity.AUX_INFO, true);
     private synchronized void insertNoteIntoDb(@NonNull final String id) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter a note for the given item.");
+        builder.setTitle(getString(R.string.enter_note));
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -543,7 +543,7 @@ boolean displayAux = sharedPref.getBoolean(SettingsActivity.AUX_INFO, true);
     private synchronized void askUserExportFileName() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Choose name for exported file.");
+        builder.setTitle(getString(R.string.choose_export_file_name));
         final EditText input = new EditText(this);
 
         final Calendar c = Calendar.getInstance();
@@ -838,7 +838,7 @@ boolean displayAux = sharedPref.getBoolean(SettingsActivity.AUX_INFO, true);
 
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Select files from?");
+            builder.setTitle(getString(R.string.select_files_from));
             builder.setPositiveButton("Storage",
                     new DialogInterface.OnClickListener()
                     {
@@ -855,7 +855,7 @@ boolean displayAux = sharedPref.getBoolean(SettingsActivity.AUX_INFO, true);
                         }
                     });
 
-            builder.setNegativeButton("Verify Directory",
+            builder.setNegativeButton(getString(R.string.verify_directory),
                     new DialogInterface.OnClickListener()
                     {
                         public void onClick(DialogInterface dialog, int id)
@@ -998,9 +998,9 @@ adapter.notifyDataSetChanged();
     private void showPairDialog() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Pair column selected, would you like to switch to Pair mode?");
+        builder.setTitle(getString(R.string.pair_mode_prompt));
 
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -1011,7 +1011,7 @@ adapter.notifyDataSetChanged();
             }
         });
 
-        builder.setNegativeButton("No thanks", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.no_thanks), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
 

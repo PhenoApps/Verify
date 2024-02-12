@@ -6,6 +6,22 @@
     <string name="drawer_open">Open</string>
     <string name="drawer_close">Close</string>
     <string name="action_camera">Barcode Scanner</string>
+    <string name="enter_note">Enter a note for the given item.</string>
+    <string name="choose_export_file_name">Choose name for exported file.</string>
+    <string name="select_files_from">Select files from?</string>
+    <string name="storage">Storage</string>
+    <string name="verify_directory">Verify Directory</string>
+    <string name="pair_mode_prompt">Pair column selected, would you like to switch to Pair mode?</string>
+    <string name="yes">Yes</string>
+    <string name="no_thanks">No thanks</string>
+    <string name="problem_reading_file">There was a problem reading this file</string>
+    <string name="must_have_extension">Imported file must have an extension. (e.g: .csv, .tsv)</string>
+    <string name="problem_reading_file_general">There was a problem reading this file.</string>
+    <string name="error_reading_file">Error reading file.</string>
+    <string name="enter_note_title">Enter a note for the given item.</string>
+    <string name="save">Save</string>
+
+
 
     <!-- Import Strings -->
     <string name="choose_separator_tutorial">Input a separator character.\nThis character should separate the headers and columns in the uploaded file.\nThen press Done.</string>

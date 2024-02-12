@@ -99,8 +99,8 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         mFileUri = getIntent().getData();
 
-        if (mFileUri == null ){
-            Toast.makeText(this, "There was a problem reading this file", Toast.LENGTH_LONG).show();
+        if (mFileUri == null ) {
+            Toast.makeText(this, getString(R.string.problem_reading_file), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -113,7 +113,7 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         //if unsupported file type, start delimiter tutorial
         if (mDelimiter == null || mHeader == null) {
-            Toast.makeText(this, "There was a problem reading this file.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.problem_reading_file_general), Toast.LENGTH_LONG).show();
             finish();
            /* if (mHeader == null) {
                 tutorialText.setText("Error reading file.");
@@ -139,7 +139,7 @@ public class LoaderDBActivity extends AppCompatActivity {
             int lastDot = mFilePath.lastIndexOf("."); // changed from mFileUri to mFilePath due to the files in download folder have URI without extension
 
             if (lastDot == -1) {
-                Toast.makeText(this, "Imported file must have an extension. (e.g: .csv, .tsv)", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.must_have_extension), Toast.LENGTH_LONG).show();
                 finish();
             }
 
@@ -493,7 +493,7 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         if (mHeader == null) {
             headerList.setAdapter(new ArrayAdapter<String>(this, org.phenoapps.verify.R.layout.row));
-            tutorialText.setText("Error reading file.");
+            tutorialText.setText(getString(R.string.error_reading_file));
             return;
         }
 
@@ -507,7 +507,7 @@ public class LoaderDBActivity extends AppCompatActivity {
             headerList.setAdapter(idAdapter);
         } else {
             headerList.setAdapter(new ArrayAdapter<String>(this, org.phenoapps.verify.R.layout.row));
-            tutorialText.setText("Error reading file.");
+            tutorialText.setText(getString(R.string.error_reading_file));
         }
     }
 
