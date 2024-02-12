@@ -192,6 +192,8 @@ class CompareActivity : AppCompatActivity() {
         barcodeScannerView.pause()
     }
 
+
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
 
         return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
