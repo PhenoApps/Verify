@@ -6,13 +6,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.appcompat.widget.ActionMenuView;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
@@ -75,7 +71,7 @@ public class LoaderDBActivity extends AppCompatActivity {
         setContentView(R.layout.activity_load_file);
 
         if(getSupportActionBar() != null){
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle("Import Data");
             getSupportActionBar().getThemedContext();
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeButtonEnabled(true);
@@ -517,26 +513,6 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         if (mFileUri != null)
             outState.putString(VerifyConstants.CSV_URI, mFileUri.toString());
-    }
-    @Override
-    final public boolean onCreateOptionsMenu(Menu m) {
-
-        final MenuInflater inflater = getMenuInflater();
-        inflater.inflate(org.phenoapps.verify.R.menu.activity_main_toolbar, m);
-
-        ActionMenuView bottomToolBar = (ActionMenuView) findViewById(R.id.bottom_toolbar);
-        Menu bottomMenu = bottomToolBar.getMenu();
-        inflater.inflate(R.menu.activity_main_bottom_toolbar, bottomMenu);
-
-        for (int i = 0; i < bottomMenu.size(); i++) {
-            bottomMenu.getItem(i).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-                    return onOptionsItemSelected(item);
-                }
-            });
-        }
-        return true;
     }
 
     @Override

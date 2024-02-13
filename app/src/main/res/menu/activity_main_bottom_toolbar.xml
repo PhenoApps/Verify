@@ -5,19 +5,16 @@
         android:id="@+id/Home"
         android:title="Home"
         android:icon="@drawable/ic_home"
-        app:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/Compare"
         android:title="Compare"
         android:icon="@drawable/ic_file_compare"
-        app:showAsAction="ifRoom"
         />
 
     <item
         android:id="@+id/Settings"
         android:title="Settings"
         android:icon="@drawable/ic_settings"
-        app:showAsAction="ifRoom"
         />
 </menu>
