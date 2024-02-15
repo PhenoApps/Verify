@@ -25,6 +25,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Environment;
 import android.preference.PreferenceManager;
@@ -54,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -80,6 +83,8 @@ public class HomeFragment extends Fragment {
     private int mMatchingOrder;
 
     private String mListId;
+    private RecyclerView valueView;
+    private CustomAdapter adapter;
 
     //pair mode vars
     private String mPairCol;
@@ -250,8 +255,12 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        TextView valueView = (TextView) getView().findViewById(R.id.valueView);
-        valueView.setMovementMethod(new ScrollingMovementMethod());
+        valueView = (RecyclerView) getView().findViewById(R.id.valueView);
+        valueView.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new CustomAdapter(new ArrayList<String>());
+        valueView.setAdapter(adapter);
+//        valueView.setLayoutManager(new );
+//        valueView.setMovementMethod(new ScrollingMovementMethod());
 
         getView().findViewById(org.phenoapps.verify.R.id.clearButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -282,7 +291,7 @@ public class HomeFragment extends Fragment {
             Cursor cursor = db.query(table, null, mListId + "=?", selectionArgs, null, null, null);
 
             String[] headerTokens = cursor.getColumnNames();
-            StringBuilder values = new StringBuilder();
+            ArrayList<String> values = new ArrayList<String>();
             StringBuilder auxValues = new StringBuilder();
             if (cursor.moveToFirst()) {
                 for (String header : headerTokens) {
@@ -303,15 +312,16 @@ public class HomeFragment extends Fragment {
                             if (val != null) auxValues.append(val);
                             auxValues.append(line_separator);
                         } else {
-                            values.append(header);
-                            values.append(" : ");
-                            if (val != null) values.append(val);
-                            values.append(line_separator);
+                            String value = header + " :\n\t\t";
+                            if (val != null) value += val;
+                            values.add(value);
                         }
                     }
                 }
                 cursor.close();
-                ((TextView) getView().findViewById(org.phenoapps.verify.R.id.valueView)).setText(values.toString());
+
+                adapter.values = values;
+                adapter.notifyDataSetChanged();
                 ((TextView) getView().findViewById(R.id.auxValueView)).setText(auxValues.toString());
                 ((EditText) getView().findViewById(R.id.scannerTextView)).setText("");
                 ringNotification(true);
@@ -753,6 +763,8 @@ public class HomeFragment extends Fragment {
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
+
+        Log.d("audio", "ringNotification: "+audioEnabled);
 
         if(success) { //ID found
             if(audioEnabled) {
