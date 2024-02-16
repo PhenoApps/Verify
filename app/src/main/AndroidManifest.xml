@@ -20,7 +20,7 @@
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|screenSize|keyboard"
             android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

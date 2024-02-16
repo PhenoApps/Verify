@@ -90,34 +90,36 @@ public class CompareFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        val choiceView = layoutInflater.inflate(R.layout.choice_compare_layout, null)
+//        val choiceView = layoutInflater.inflate(R.layout.choice_compare_layout, null)
+//
+//        val radioGroup = choiceView.findViewById<RadioGroup>(R.id.compare_radio_group)
 
-        val radioGroup = choiceView.findViewById<RadioGroup>(R.id.compare_radio_group)
+//        val containsRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton)
+//        val matchesRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton2)
 
-        val containsRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton)
-        val matchesRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton2)
+//        containsRadioButton.isChecked = true
 
-        containsRadioButton.isChecked = true
-
-        val builder = AlertDialog.Builder(context as Context).apply {
-
-            setView(choiceView)
-
-            setTitle("Choose compare mode:")
-
-            setPositiveButton("OK") { _, _ ->
-                when (radioGroup.checkedRadioButtonId) {
-                    containsRadioButton.id -> mMode = CompareFragment.Mode.Contains
-                    matchesRadioButton.id -> mMode = CompareFragment.Mode.Matches
-                }
-            }
-        }
-
-        builder.show()
+//        val builder = AlertDialog.Builder(context as Context).apply {
+//
+//            setView(choiceView)
+//
+//            setTitle("Choose compare mode:")
+//
+//            setPositiveButton("OK") { _, _ ->
+//                when (radioGroup.checkedRadioButtonId) {
+//                    containsRadioButton.id -> mMode = CompareFragment.Mode.Contains
+//                    matchesRadioButton.id -> mMode = CompareFragment.Mode.Matches
+//                }
+//            }
+//        }
+//
+//        builder.show()
 
         imageView = view.findViewById(R.id.imageView)
         firstEditText = view.findViewById<EditText>(R.id.editText)
         secondEditText = view.findViewById<EditText>(R.id.editText2)
+        barcodeScannerView = view.findViewById(R.id.zxing_barcode_scanner)
+
 
         firstEditText.setOnClickListener {
             mFocused = R.id.editText
