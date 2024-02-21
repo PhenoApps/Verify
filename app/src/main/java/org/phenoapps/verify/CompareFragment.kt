@@ -1,27 +1,50 @@
-package org.phenoapps.verify
+package org.phenoapps.verify;
 
-import android.app.Activity
-import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.annotation.SuppressLint;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import android.app.Activity;
+import android.content.Context
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.LayoutDirection
-import android.view.*
-import android.widget.*
-
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import androidx.appcompat.app.AlertDialog
 import com.google.zxing.ResultPoint
-
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
 
-class CompareActivity : AppCompatActivity() {
+import org.phenoapps.verify.databinding.FragmentCompareBinding;
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ */
+
+public class CompareFragment : Fragment() {
 
     enum class Mode {
         Contains,
         Matches
     }
+
+    private lateinit var view: View;
 
     private lateinit var barcodeScannerView: DecoratedBarcodeView
     private lateinit var firstEditText: EditText
@@ -30,7 +53,6 @@ class CompareActivity : AppCompatActivity() {
 
     private var mMode: Mode = Mode.Matches
 
-    //keeps track of which edit text is being scanned into, at first it is the top edit text.
     private var mFocused: Int = R.id.editText
 
     private val callback = object : BarcodeCallback {
@@ -41,56 +63,61 @@ class CompareActivity : AppCompatActivity() {
 
             result.text?.let {
 
-                findViewById<EditText>(mFocused).setText(result.text ?: "")
+                view.findViewById<EditText>(mFocused).setText(result.text ?: "")
 
-                mFocused = when(mFocused) {
+                mFocused = when (mFocused) {
                     R.id.editText -> R.id.editText2
                     else -> R.id.editText
                 }
 
-                findViewById<EditText>(mFocused).requestFocus()
+                view.findViewById<EditText>(mFocused).requestFocus()
             }
-
             barcodeScannerView.resume()
-
         }
-
-        override fun possibleResultPoints(resultPoints: List<ResultPoint>) {
-
+        override fun possibleResultPoints(resultPoints: MutableList<ResultPoint>?) {
         }
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        var layoutView = inflater.inflate(R.layout.activity_compare, container, false);
+        return layoutView;
+    }
+
+
     override fun onStart() {
         super.onStart()
+        val choiceView = layoutInflater.inflate(R.layout.choice_compare_layout, null)
 
-        val view = layoutInflater.inflate(R.layout.choice_compare_layout, null)
-
-        val radioGroup = view.findViewById<RadioGroup>(R.id.compare_radio_group)
+        val radioGroup = choiceView.findViewById<RadioGroup>(R.id.compare_radio_group)
 
         val containsRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton)
         val matchesRadioButton = radioGroup.findViewById<RadioButton>(R.id.radioButton2)
 
         containsRadioButton.isChecked = true
 
-        val builder = AlertDialog.Builder(this).apply {
+        val builder = AlertDialog.Builder(context as Context).apply {
 
-            setView(view)
+            setView(choiceView)
 
             setTitle("Choose compare mode:")
 
             setPositiveButton("OK") { _, _ ->
                 when (radioGroup.checkedRadioButtonId) {
-                    containsRadioButton.id -> mMode = Mode.Contains
-                    matchesRadioButton.id -> mMode = Mode.Matches
+                    containsRadioButton.id -> mMode = CompareFragment.Mode.Contains
+                    matchesRadioButton.id -> mMode = CompareFragment.Mode.Matches
                 }
             }
         }
 
         builder.show()
 
-        imageView = findViewById(R.id.imageView)
-        firstEditText = findViewById<EditText>(R.id.editText)
-        secondEditText = findViewById<EditText>(R.id.editText2)
+        imageView = view.findViewById(R.id.imageView)
+        firstEditText = view.findViewById<EditText>(R.id.editText)
+        secondEditText = view.findViewById<EditText>(R.id.editText2)
 
         firstEditText.setOnClickListener {
             mFocused = R.id.editText
@@ -114,7 +141,7 @@ class CompareActivity : AppCompatActivity() {
                     val first = firstEditText.text
                     val second = secondEditText.text
                     when (mMode) {
-                        Mode.Contains -> {
+                        CompareFragment.Mode.Contains -> {
                             when {
                                 first.contains(second) || second.contains(first) -> {
                                     imageView.setImageResource(R.drawable.ic_checkbox_marked_circle)
@@ -122,7 +149,7 @@ class CompareActivity : AppCompatActivity() {
                                 else -> imageView.setImageResource(R.drawable.ic_alpha_x_circle)
                             }
                         }
-                        Mode.Matches -> {
+                        CompareFragment.Mode.Matches -> {
                             when {
                                 firstEditText.text.toString() == secondEditText.text.toString() -> {
                                     imageView.setImageResource(R.drawable.ic_checkbox_marked_circle)
@@ -139,16 +166,15 @@ class CompareActivity : AppCompatActivity() {
         firstEditText.addTextChangedListener(watcher)
         secondEditText.addTextChangedListener(watcher)
 
-        barcodeScannerView = findViewById(org.phenoapps.verify.R.id.zxing_barcode_scanner)
+        barcodeScannerView = view.findViewById(R.id.zxing_barcode_scanner)
         barcodeScannerView.barcodeView.cameraSettings.isContinuousFocusEnabled = true
         barcodeScannerView.barcodeView.cameraSettings.isBarcodeSceneModeEnabled = true
         barcodeScannerView.decodeContinuous(callback)
 
-        if (supportActionBar != null) {
-            supportActionBar?.title = "Compare Barcodes"
-            supportActionBar?.themedContext
-            supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            supportActionBar?.setHomeButtonEnabled(true)
+        val actionBar = (activity as AppCompatActivity).supportActionBar;
+        if (actionBar != null) {
+            actionBar.title = "Compare Barcodes"
+            actionBar.themedContext
         }
 
         imageView.setOnClickListener {
@@ -156,26 +182,6 @@ class CompareActivity : AppCompatActivity() {
             secondEditText.setText("")
             firstEditText.requestFocus()
             imageView.visibility = View.INVISIBLE
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-
-        super.onCreate(savedInstanceState)
-
-        setContentView(org.phenoapps.verify.R.layout.activity_compare)
-    }
-
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-        when (item.itemId) {
-            android.R.id.home -> {
-                setResult(Activity.RESULT_OK)
-                finish()
-                return true
-            }
-            else -> return super.onOptionsItemSelected(item)
         }
     }
 
@@ -191,8 +197,8 @@ class CompareActivity : AppCompatActivity() {
         barcodeScannerView.pause()
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-
-        return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        this.view = view;
     }
 }
