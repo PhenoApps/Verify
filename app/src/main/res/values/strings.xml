@@ -25,6 +25,8 @@
     <string name="match_mode">Order - Verify order of items</string>
     <string name="pair_mode">Pair - Track pairings of items</string>
 
+    
+
     <!-- Intro Strings -->
     <string name="intro_title_1">Welcome to Verify!</string>
     <string name="intro_title_2">Import a File</string>
