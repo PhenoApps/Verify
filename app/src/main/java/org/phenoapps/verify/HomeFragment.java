@@ -1,5 +1,6 @@
 package org.phenoapps.verify;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,8 +10,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteStatement;
-import android.media.MediaPlayer;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -19,14 +18,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.ActionMenuView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
@@ -47,14 +42,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.phenoapps.verify.utilities.FileExport;
+import org.phenoapps.verify.utilities.RingUtility;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Locale;
@@ -89,6 +81,13 @@ public class HomeFragment extends Fragment {
 
     private Toolbar navigationToolBar;
 
+    private RingUtility notification;
+    private FileExport exportUtility;
+
+    private View view;
+    private Context context;
+    private Activity activity;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -101,10 +100,14 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mIds = new SparseArray<>();
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        this.view = view;
+        context = getContext();
+        activity = getActivity();
 
-        final View auxInfo = getView().findViewById(R.id.auxScrollView);
-        final View auxValue = getView().findViewById(R.id.auxValueView);
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+
+        final View auxInfo = view.findViewById(R.id.auxScrollView);
+        final View auxValue = view.findViewById(R.id.auxValueView);
 
         if (sharedPref.getBoolean(SettingsFragment.AUX_INFO, false)) {
             auxInfo.setVisibility(View.VISIBLE);
@@ -129,6 +132,8 @@ public class HomeFragment extends Fragment {
             }
         };
 
+        notification = new RingUtility(context, view, activity.getPackageName(), getResources());
+
         sharedPref.registerOnSharedPreferenceChangeListener(mPrefListener);
 
         if (!sharedPref.getBoolean("onlyLoadTutorialOnce", false)) {
@@ -145,7 +150,7 @@ public class HomeFragment extends Fragment {
 
         mFileName = sharedPref.getString(SettingsFragment.FILE_NAME, "");
 
-        ActivityCompat.requestPermissions(getActivity(), VerifyConstants.permissions, VerifyConstants.PERM_REQ);
+        ActivityCompat.requestPermissions(activity, VerifyConstants.permissions, VerifyConstants.PERM_REQ);
 
         mNextPairVal = null;
         mMatchingOrder = 0;
@@ -153,7 +158,7 @@ public class HomeFragment extends Fragment {
 
         initializeUIVariables();
 
-        mDbHelper = new IdEntryDbHelper(getContext());
+        mDbHelper = new IdEntryDbHelper(context);
 
         loadSQLToLocal();
 
@@ -197,7 +202,7 @@ public class HomeFragment extends Fragment {
     @Nullable
     private ActionBar getSupportActionBar() {
         ActionBar actionBar = null;
-        if (getActivity() instanceof AppCompatActivity) {
+        if (activity instanceof AppCompatActivity) {
             AppCompatActivity activity = (AppCompatActivity) getActivity();
             actionBar = activity.getSupportActionBar();
         }
@@ -212,7 +217,7 @@ public class HomeFragment extends Fragment {
             getSupportActionBar().setHomeButtonEnabled(true);
         }
 
-        final EditText scannerTextView = ((EditText) getView().findViewById(R.id.scannerTextView));
+        final EditText scannerTextView = ((EditText) view.findViewById(R.id.scannerTextView));
         scannerTextView.setSelectAllOnFocus(true);
         scannerTextView.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -227,7 +232,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        ListView idTable = ((ListView) getView().findViewById(R.id.idTable));
+        ListView idTable = ((ListView) view.findViewById(R.id.idTable));
         idTable.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
         idTable.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -250,10 +255,10 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        TextView valueView = (TextView) getView().findViewById(R.id.valueView);
+        TextView valueView = (TextView) view.findViewById(R.id.valueView);
         valueView.setMovementMethod(new ScrollingMovementMethod());
 
-        getView().findViewById(org.phenoapps.verify.R.id.clearButton).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(org.phenoapps.verify.R.id.clearButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 scannerTextView.setText("");
@@ -263,11 +268,11 @@ public class HomeFragment extends Fragment {
 
     private synchronized void checkScannedItem() {
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
         boolean displayAux = sharedPref.getBoolean(SettingsFragment.AUX_INFO, true);
 
-        String scannedId = ((EditText) getView().findViewById(org.phenoapps.verify.R.id.scannerTextView))
+        String scannedId = ((EditText) view.findViewById(org.phenoapps.verify.R.id.scannerTextView))
                 .getText().toString();
 
         if (mIds != null && mIds.size() > 0) {
@@ -311,12 +316,12 @@ public class HomeFragment extends Fragment {
                     }
                 }
                 cursor.close();
-                ((TextView) getView().findViewById(org.phenoapps.verify.R.id.valueView)).setText(values.toString());
-                ((TextView) getView().findViewById(R.id.auxValueView)).setText(auxValues.toString());
-                ((EditText) getView().findViewById(R.id.scannerTextView)).setText("");
+                ((TextView) view.findViewById(org.phenoapps.verify.R.id.valueView)).setText(values.toString());
+                ((TextView) view.findViewById(R.id.auxValueView)).setText(auxValues.toString());
+                ((EditText) view.findViewById(R.id.scannerTextView)).setText("");
             } else {
                 if (scanMode != 2) {
-                    ringNotification(false);
+                    notification.ringNotification(false);
                 }
             }
         }
@@ -340,9 +345,9 @@ public class HomeFragment extends Fragment {
 
     private synchronized void insertNoteIntoDb(@NonNull final String id) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Enter a note for the given item.");
-        final EditText input = new EditText(getContext());
+        final EditText input = new EditText(context);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
@@ -370,14 +375,14 @@ public class HomeFragment extends Fragment {
     private synchronized void exertModeFunction(@NonNull String id) {
 
         //get app settings
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
 
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         if (scanMode == 0 ) { //default mode
             mMatchingOrder = 0;
-            ringNotification(checkIdExists(id));
+            notification.ringNotification(checkIdExists(id));
 
         } else if (scanMode == 1) { //order mode
             final int tableIndex = getTableIndexById(id);
@@ -385,11 +390,11 @@ public class HomeFragment extends Fragment {
             if (tableIndex != -1) {
                 if (mMatchingOrder == tableIndex) {
                     mMatchingOrder++;
-                    Toast.makeText(getContext(), "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
-                    ringNotification(true);
+                    Toast.makeText(context, "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
+                    notification.ringNotification(true);
                 } else {
-                    Toast.makeText(getContext(), "Scanning out of order!", Toast.LENGTH_SHORT).show();
-                    ringNotification(false);
+                    Toast.makeText(context, "Scanning out of order!", Toast.LENGTH_SHORT).show();
+                    notification.ringNotification(false);
                 }
             }
         } else if (scanMode == 2) { //filter mode, delete rows with given id
@@ -417,8 +422,8 @@ public class HomeFragment extends Fragment {
                 //if next pair id is waiting, check if it matches scanned id and reset mode
                 if (mNextPairVal != null) {
                     if (mNextPairVal.equals(id)) {
-                        ringNotification(true);
-                        Toast.makeText(getContext(), "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
+                        notification.ringNotification(true);
+                        Toast.makeText(context, "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
                     }
                     mNextPairVal = null;
                 } else { //otherwise query for the current id's pair
@@ -479,7 +484,7 @@ public class HomeFragment extends Fragment {
         } catch (SQLiteException e) {
             e.printStackTrace();
         }
-        ListView idTable = (ListView) getView().findViewById(org.phenoapps.verify.R.id.idTable);
+        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         for (int position = 0; position < idTable.getCount(); position++) {
 
             final String id = (idTable.getItemAtPosition(position)).toString();
@@ -494,9 +499,9 @@ public class HomeFragment extends Fragment {
 
         mIds = new SparseArray<>();
 
-        mDbHelper = new IdEntryDbHelper(getContext());
+        mDbHelper = new IdEntryDbHelper(context);
 
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         mListId = sharedPref.getString(SettingsFragment.LIST_KEY_NAME, null);
         mPairCol = sharedPref.getString(SettingsFragment.PAIR_NAME, null);
 
@@ -536,191 +541,10 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private synchronized void askUserExportFileName() {
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Choose name for exported file.");
-        final EditText input = new EditText(getContext());
-
-        final Calendar c = Calendar.getInstance();
-        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-
-        int lastDot = mFileName.lastIndexOf('.');
-        if (lastDot != -1) {
-            mFileName = mFileName.substring(0, lastDot);
-        }
-        input.setText("Verify_"+ sdf.format(c.getTime()));
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("Export", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int which) {
-                String value = input.getText().toString();
-                mFileName = value;
-                final Intent i;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-                    i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                    i.setType("*/*");
-                    i.putExtra(Intent.EXTRA_TITLE, value+".csv");
-                    startActivityForResult(Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST);
-                }else{
-                    writeToExportPath();
-                }
-            }
-        });
-        builder.show();
-    }
-
-    public void writeToExportPath(){
-        String value = mFileName;
-
-        if (!value.isEmpty()) {
-            if (isExternalStorageWritable()) {
-                try {
-                    File verifyDirectory = new File(Environment.getExternalStorageDirectory().getPath() + "/Verify");
-                    final File output = new File(verifyDirectory, value + ".csv");
-                    final FileOutputStream fstream = new FileOutputStream(output);
-                    final SQLiteDatabase db = mDbHelper.getReadableDatabase();
-                    final String table = IdEntryContract.IdEntry.TABLE_NAME;
-                    final Cursor cursor = db.query(table, null, null, null, null, null, null);
-                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
-
-                    //first write header line
-                    final String[] headers = cursor.getColumnNames();
-                    for (int i = 0; i < headers.length; i++) {
-                        if (i != 0) fstream.write(",".getBytes());
-                        fstream.write(headers[i].getBytes());
-                    }
-                    fstream.write(line_separator.getBytes());
-                    //populate text file with current database values
-                    if (cursor.moveToFirst()) {
-                        do {
-                            for (int i = 0; i < headers.length; i++) {
-                                if (i != 0) fstream.write(",".getBytes());
-                                final String val = cursor.getString(
-                                        cursor.getColumnIndexOrThrow(headers[i])
-                                );
-                                if (val == null) fstream.write("null".getBytes());
-                                else fstream.write(val.getBytes());
-                            }
-                            fstream.write(line_separator.getBytes());
-                        } while (cursor.moveToNext());
-                    }
-
-                    cursor.close();
-                    fstream.flush();
-                    fstream.close();
-                    scanFile(getContext(), output);
-                            /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                                @Override
-                                public void onScanCompleted(String path, Uri uri) {
-                                    Log.v("scan complete", path);
-                                }
-                            });*/
-                }catch (NullPointerException npe){
-                    npe.printStackTrace();
-                    Toast.makeText(getContext(), "Error in opening the Specified file", Toast.LENGTH_LONG).show();
-                }
-                catch (SQLiteException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException io) {
-                    io.printStackTrace();
-                }
-            } else {
-                Toast.makeText(getContext(),
-                        "External storage not writable.", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(getContext(),
-                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public static void scanFile(Context ctx, File filePath) {
-        MediaScannerConnection.scanFile(ctx, new String[] { filePath.getAbsolutePath()}, null, null);
-    }
-
-    public void writeToExportPath(Uri uri){
-
-        String value = mFileName;
-
-        if (uri == null){
-            Toast.makeText(getContext(), "Unable to open the Specified file", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (!value.isEmpty()) {
-            if (isExternalStorageWritable()) {
-                try {
-                    final File output = new File(uri.getPath());
-                    final OutputStream fstream = getContext().getContentResolver().openOutputStream(uri);
-                    final SQLiteDatabase db = mDbHelper.getReadableDatabase();
-                    final String table = IdEntryContract.IdEntry.TABLE_NAME;
-                    final Cursor cursor = db.query(table, null, null, null, null, null, null);
-                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
-
-                    //first write header line
-                    final String[] headers = cursor.getColumnNames();
-                    for (int i = 0; i < headers.length; i++) {
-                        if (i != 0) fstream.write(",".getBytes());
-                        fstream.write(headers[i].getBytes());
-                    }
-                    fstream.write(line_separator.getBytes());
-                    //populate text file with current database values
-                    if (cursor.moveToFirst()) {
-                        do {
-                            for (int i = 0; i < headers.length; i++) {
-                                if (i != 0) fstream.write(",".getBytes());
-                                final String val = cursor.getString(
-                                        cursor.getColumnIndexOrThrow(headers[i])
-                                );
-                                if (val == null) fstream.write("null".getBytes());
-                                else fstream.write(val.getBytes());
-                            }
-                            fstream.write(line_separator.getBytes());
-                        } while (cursor.moveToNext());
-                    }
-
-                    cursor.close();
-                    fstream.flush();
-                    fstream.close();
-                    scanFile(getContext(), output);
-                            /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                                @Override
-                                public void onScanCompleted(String path, Uri uri) {
-                                    Log.v("scan complete", path);
-                                }
-                            });*/
-                }catch (NullPointerException npe){
-                    npe.printStackTrace();
-                    Toast.makeText(getContext(), "Error in opening the Specified file", Toast.LENGTH_LONG).show();
-                }
-                catch (SQLiteException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException io) {
-                    io.printStackTrace();
-                }
-            } else {
-                Toast.makeText(getContext(),
-                        "External storage not writable.", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(getContext(),
-                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     //returns index of table with identifier = id, returns -1 if not found
     private int getTableIndexById(String id) {
 
-        ListView idTable = (ListView) getView().findViewById(org.phenoapps.verify.R.id.idTable);
+        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         final int size = idTable.getAdapter().getCount();
         int ret = -1;
         for (int i = 0; i < size; i++) {
@@ -736,9 +560,9 @@ public class HomeFragment extends Fragment {
 
     private void updateFilteredArrayAdapter(String id) {
 
-        ListView idTable = (ListView) getView().findViewById(org.phenoapps.verify.R.id.idTable);
+        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         //update id table array adapter
-        final ArrayAdapter<String> updatedAdapter = new ArrayAdapter<>(getContext(), org.phenoapps.verify.R.layout.row);
+        final ArrayAdapter<String> updatedAdapter = new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
         final int oldSize = idTable.getAdapter().getCount();
 
         for (int i = 0; i < oldSize; i++) {
@@ -746,56 +570,6 @@ public class HomeFragment extends Fragment {
             if (!temp.equals(id)) updatedAdapter.add(temp);
         }
         idTable.setAdapter(updatedAdapter);
-    }
-
-    private void ringNotification(boolean success) {
-
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
-
-        if(success) { //ID found
-            if(audioEnabled) {
-                if (success) {
-                    try {
-                        int resID = getResources().getIdentifier("plonk", "raw", getActivity().getPackageName());
-                        MediaPlayer chimePlayer = MediaPlayer.create(getContext(), resID);
-                        chimePlayer.start();
-
-                        chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            public void onCompletion(MediaPlayer mp) {
-                                mp.release();
-                            }
-                        });
-                    } catch (Exception ignore) {
-                    }
-                }
-            }
-        }
-
-        if(!success) { //ID not found
-            ((TextView) getView().findViewById(org.phenoapps.verify.R.id.valueView)).setText("");
-
-            if (audioEnabled) {
-                if(!success) {
-                    try {
-                        int resID = getResources().getIdentifier("error", "raw", getActivity().getPackageName());
-                        MediaPlayer chimePlayer = MediaPlayer.create(getContext(), resID);
-                        chimePlayer.start();
-
-                        chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            public void onCompletion(MediaPlayer mp) {
-                                mp.release();
-                            }
-                        });
-                    } catch (Exception ignore) {
-                    }
-                }
-            } else {
-                if (!success) {
-                    Toast.makeText(getContext(), "Scanned ID not found", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
     }
 
     @Override
@@ -808,17 +582,18 @@ public class HomeFragment extends Fragment {
     final public boolean onOptionsItemSelected(MenuItem item) {
         int actionCamera = R.id.action_camera;
         int actionImport = R.id.action_import;
+        int actionExport = R.id.action_export;
 
         if (item.getItemId() == actionImport){
-            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+            final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
             final int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
             final Intent i;
-            File verifyDirectory = new File(getContext().getExternalFilesDir(null), "/Verify");
+            File verifyDirectory = new File(context.getExternalFilesDir(null), "/Verify");
 
             File[] files = verifyDirectory.listFiles();
 
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("Select files from?");
             builder.setPositiveButton("Storage",
                     new DialogInterface.OnClickListener()
@@ -842,7 +617,7 @@ public class HomeFragment extends Fragment {
                         public void onClick(DialogInterface dialog, int id)
                         {
 
-                            AlertDialog.Builder fileBuilder = new AlertDialog.Builder(getContext());
+                            AlertDialog.Builder fileBuilder = new AlertDialog.Builder(context);
                             fileBuilder.setTitle("Select the sample file");
                             final int[] checkedItem = {-1};
                             String[] listItems = verifyDirectory.list();
@@ -850,7 +625,7 @@ public class HomeFragment extends Fragment {
                             fileBuilder.setSingleChoiceItems(listItems, checkedItem[0],(fileDialog, which) -> {
                                 checkedItem[0] = which;
 
-                                Intent i = new Intent(getContext(), LoaderDBActivity.class);
+                                Intent i = new Intent(context, LoaderDBActivity.class);
                                 i.setData(Uri.fromFile(files[which]));
                                 startActivityForResult(i, VerifyConstants.LOADER_INTENT_REQ);
                                 fileDialog.dismiss();
@@ -862,10 +637,12 @@ public class HomeFragment extends Fragment {
                     });
             builder.show();
         } else if(item.getItemId() == actionCamera){
-            final Intent cameraIntent = new Intent(getContext(), ScanActivity.class);
+            final Intent cameraIntent = new Intent(context, ScanActivity.class);
             startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
-        }
-        else{
+        } else if (item.getItemId() == actionExport) {
+            exportUtility = new FileExport(this.context, this.activity,this.mFileName, this.mDbHelper);
+            exportUtility.askUserExportFileName();
+        } else{
             return super.onOptionsItemSelected(item);
         }
         return true;
@@ -876,15 +653,15 @@ public class HomeFragment extends Fragment {
 
         super.onActivityResult(requestCode, resultCode, intent);
 
-        if (resultCode == getActivity().RESULT_OK) {
+        if (resultCode == Activity.RESULT_OK) {
 
             if (intent != null) {
                 switch (requestCode) {
                     case VerifyConstants.PICK_CUSTOM_DEST:
-                        writeToExportPath(intent.getData());
+                        exportUtility.writeToExportPath(intent.getData());
                         break;
                     case VerifyConstants.DEFAULT_CONTENT_REQ:
-                        Intent i = new Intent(getContext(), LoaderDBActivity.class);
+                        Intent i = new Intent(context, LoaderDBActivity.class);
                         i.setData(intent.getData());
                         startActivityForResult(i, VerifyConstants.LOADER_INTENT_REQ);
                         break;
@@ -901,7 +678,7 @@ public class HomeFragment extends Fragment {
                         if (intent.hasExtra(VerifyConstants.PAIR_COL_EXTRA))
                             mPairCol = intent.getStringExtra(VerifyConstants.PAIR_COL_EXTRA);
 
-                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
                         final SharedPreferences.Editor editor = sharedPref.edit();
 
                         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
@@ -915,7 +692,7 @@ public class HomeFragment extends Fragment {
 
                         if (mPairCol == null && scanMode == 4) {
                             editor.putString(SettingsFragment.SCAN_MODE_LIST, "0");
-                            Toast.makeText(getContext(),
+                            Toast.makeText(context,
                                     "Switching to default mode, no pair ID found.",
                                     Toast.LENGTH_SHORT).show();
                         }
@@ -931,7 +708,7 @@ public class HomeFragment extends Fragment {
                 }
 
                 if (intent.hasExtra(VerifyConstants.CAMERA_RETURN_ID)) {
-                    ((EditText) getView().findViewById(org.phenoapps.verify.R.id.scannerTextView))
+                    ((EditText) view.findViewById(org.phenoapps.verify.R.id.scannerTextView))
                             .setText(intent.getStringExtra(VerifyConstants.CAMERA_RETURN_ID));
                     checkScannedItem();
                 }
@@ -941,9 +718,9 @@ public class HomeFragment extends Fragment {
 
     private void buildListView() {
 
-        ListView idTable = (ListView) getView().findViewById(org.phenoapps.verify.R.id.idTable);
+        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         ArrayAdapter<String> idAdapter =
-                new ArrayAdapter<>(getContext(), org.phenoapps.verify.R.layout.row);
+                new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
         int size = mIds.size();
         for (int i = 0; i < size; i++) {
             idAdapter.add(this.mIds.get(this.mIds.keyAt(i)));
@@ -953,9 +730,9 @@ public class HomeFragment extends Fragment {
 
     private void clearListView() {
 
-        ListView idTable = (ListView) getView().findViewById(org.phenoapps.verify.R.id.idTable);
+        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         final ArrayAdapter<String> adapter =
-                new ArrayAdapter<>(getContext(), org.phenoapps.verify.R.layout.row);
+                new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
 
         idTable.setAdapter(adapter);
         adapter.notifyDataSetChanged();
@@ -963,14 +740,14 @@ public class HomeFragment extends Fragment {
 
     private void showPairDialog() {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Pair column selected, would you like to switch to Pair mode?");
 
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
                 SharedPreferences.Editor editor = sharedPref.edit();
                 editor.putString(SettingsFragment.SCAN_MODE_LIST, "4");
                 editor.apply();
@@ -999,9 +776,9 @@ public class HomeFragment extends Fragment {
             public void run() {
 
                 //  Launch app intro
-                final Intent i = new Intent(getContext(), IntroActivity.class);
+                final Intent i = new Intent(context, IntroActivity.class);
 
-                getActivity().runOnUiThread(new Runnable() {
+                activity.runOnUiThread(new Runnable() {
                     @Override public void run() {
                         startActivity(i);
                     }
@@ -1013,9 +790,9 @@ public class HomeFragment extends Fragment {
     }
 
     /* Checks if external storage is available for read and write */
-    static private boolean isExternalStorageWritable() {
-        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
-    }
+//    static private boolean isExternalStorageWritable() {
+//        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
+//    }
 
     @Override
     final public void onDestroy() {

@@ -9,6 +9,12 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_export"
+        android:icon="@drawable/ic_export"
+        android:title="Export"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_camera"
         android:icon="@drawable/ic_barcode_scan"
         android:title="@string/action_camera"
