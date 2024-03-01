@@ -2,7 +2,7 @@ package org.phenoapps.verify;
 
 import android.Manifest;
 
-class VerifyConstants {
+public class VerifyConstants {
 
     final static String[] permissions = new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -15,7 +15,7 @@ class VerifyConstants {
     final static int CAMERA_INTENT_REQ = 102;
     final static int SETTINGS_INTENT_REQ = 103;
     final static int DEFAULT_CONTENT_REQ = 104;
-    final static int PICK_CUSTOM_DEST = 105;
+    public final static int PICK_CUSTOM_DEST = 105;
 
     //extras
     final static String CSV_URI = "org.phenoapps.verify.CSV_URI";
