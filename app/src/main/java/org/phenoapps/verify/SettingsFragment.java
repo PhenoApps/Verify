@@ -71,7 +71,7 @@ public class SettingsFragment extends PreferenceFragment {
                         sharedPrefs.getBoolean(SettingsActivity.DISABLE_PAIR, false)) {
                     ((ListPreference) preference).setValue("0");
                     Toast.makeText(getActivity(),
-                            "Pair mode cannot be used without setting a pair ID.",
+                            getString(R.string.choose_pair_button_tutorial),
                             Toast.LENGTH_SHORT).show();
                     return false;
                 }

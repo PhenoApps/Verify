@@ -67,6 +67,19 @@ public class LoaderDBActivity extends AppCompatActivity {
     private HashSet<String> mDefaultCols;
 
     private IdEntryDbHelper mDbHelper;
+    final String fileExtXlsx = getString(R.string.file_extension_xlsx);
+    final String fileExtXls = getString(R.string.file_extension_xls);
+    final String fileExtCsv = getString(R.string.file_extension_csv);
+    final String fileExtTsv = getString(R.string.file_extension_tsv);
+    final String fileExtTxt = getString(R.string.file_extension_txt);
+    final String tableName = getString(R.string.db_table_verify);
+    final String createTableCommand = getString(R.string.db_create_table_verify);
+    final String colDate = getString(R.string.db_column_date);
+    final String colUser = getString(R.string.db_column_user);
+    final String colNote = getString(R.string.db_column_note);
+    final String colScanCount = getString(R.string.db_column_scan_count);
+    final String colColor = getString(R.string.db_column_color);
+    final String rowErrorLog = getString(R.string.row_error_log);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,10 +103,10 @@ public class LoaderDBActivity extends AppCompatActivity {
         //default column names
         mDefaultCols = new HashSet<>(5);
         mDefaultCols.add("date");
-        mDefaultCols.add("color");
-        mDefaultCols.add("scan_count");
-        mDefaultCols.add("user");
-        mDefaultCols.add("note");
+        mDefaultCols.add(getString(R.string.col_color));
+        mDefaultCols.add(getString(R.string.col_scan_count));
+        mDefaultCols.add(getString(R.string.col_user));
+        mDefaultCols.add(getString(R.string.col_note));
 
         initializeUI();
 
@@ -150,7 +163,7 @@ public class LoaderDBActivity extends AppCompatActivity {
             //xls library support
             if (mCurrentWorkbook != null) mCurrentWorkbook.close();
 
-            if (mFileExtension.equals("xlsx") || mFileExtension.equals("xls")) {
+            if (mFileExtension.equals(fileExtXlsx) || mFileExtension.equals(fileExtXls)) {
                 mCurrentWorkbook = WorkbookFactory.create(new File(mFilePath));
 
                 final int numSheets = mCurrentWorkbook.getNumberOfSheets();
@@ -170,9 +183,9 @@ public class LoaderDBActivity extends AppCompatActivity {
                 }
             } else {
                 //plain text file support
-                if (mFileExtension.equals("csv")) { //files ending in .csv
+                if (mFileExtension.equals(fileExtCsv)) { //files ending in .csv
                     mDelimiter = ",";
-                } else if (mFileExtension.equals("tsv") || mFileExtension.equals("txt")) { //files ending in .txt
+                } else if (mFileExtension.equals(fileExtTsv) || mFileExtension.equals(fileExtTxt)) { //files ending in .txt
                     mDelimiter = "\t";
                 } else
                     mDelimiter = null; //non-supported file type, display header for user to choose delimiter
@@ -302,11 +315,11 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         final SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        db.execSQL("DROP TABLE IF EXISTS VERIFY");
+        db.execSQL("DROP TABLE IF EXISTS " + tableName);
 
         final StringBuilder dbExecCreate = new StringBuilder(32);
 
-        dbExecCreate.append("CREATE TABLE VERIFY(");
+        dbExecCreate.append(createTableCommand);
         dbExecCreate.append(mIdHeader);
         dbExecCreate.append(" TEXT PRIMARY KEY");
 
@@ -315,11 +328,11 @@ public class LoaderDBActivity extends AppCompatActivity {
             dbExecCreate.append(mPairCol);
             dbExecCreate.append(" TEXT");
         }
-        dbExecCreate.append(", date DATE");
-        dbExecCreate.append(", user TEXT");
-        dbExecCreate.append(", note TEXT");
-        dbExecCreate.append(", scan_count INT DEFAULT 0");
-        dbExecCreate.append(", color INT");
+        dbExecCreate.append(", ").append(colDate);
+        dbExecCreate.append(", ").append(colUser);
+        dbExecCreate.append(", ").append(colNote);
+        dbExecCreate.append(", ").append(colScanCount);
+        dbExecCreate.append(", ").append(colColor);
 
         final String[] cols = displayCols.toArray(new String[] {});
         final int colSize = cols.length;
@@ -340,9 +353,9 @@ public class LoaderDBActivity extends AppCompatActivity {
         }
         db.close();
 
-        if (mFileExtension.equals("xls")) {
+        if (mFileExtension.equals(getString(R.string.file_extension_xls))) {
             parseAndInsertXLS();
-        } else if (mFileExtension.equals("xlsx")) {
+        } else if (mFileExtension.equals(getString(R.string.file_extension_xlsx))) {
             parseAndInsertXLS();
         } else {
             parseAndInsertCSV();
@@ -379,7 +392,7 @@ public class LoaderDBActivity extends AppCompatActivity {
                             }
                             long newRowId = db.insert("VERIFY", null, entry);
                             entry.clear();
-                        } else Log.d("ROW ERROR", temp);
+                        } else Log.d(getString(R.string.log_row_error), temp);
                     }
                     db.setTransactionSuccessful();
                     db.endTransaction();

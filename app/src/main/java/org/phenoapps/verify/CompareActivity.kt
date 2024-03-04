@@ -76,7 +76,7 @@ class CompareActivity : AppCompatActivity() {
 
             setView(view)
 
-            setTitle("Choose compare mode:")
+            setTitle(getString(R.string.compare_activity_title))
 
             setPositiveButton("OK") { _, _ ->
                 when (radioGroup.checkedRadioButtonId) {
@@ -145,7 +145,7 @@ class CompareActivity : AppCompatActivity() {
         barcodeScannerView.decodeContinuous(callback)
 
         if (supportActionBar != null) {
-            supportActionBar?.title = "Compare Barcodes"
+            title = getString(R.string.compare_barcodes)
             supportActionBar?.themedContext
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
             supportActionBar?.setHomeButtonEnabled(true)

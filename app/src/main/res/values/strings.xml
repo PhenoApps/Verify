@@ -21,7 +21,9 @@
     <string name="enter_note_title">Enter a note for the given item.</string>
     <string name="save">Save</string>
 
-
+    <!--Compare Strings-->
+    <string name = "compare_barcodes">Compare Barcodes</string>
+    <string name="compare_activity_title">Choose compare mode:</string>
 
     <!-- Import Strings -->
     <string name="choose_separator_tutorial">Input a separator character.\nThis character should separate the headers and columns in the uploaded file.\nThen press Done.</string>
@@ -30,6 +32,7 @@
     <string name="open_file_tutorial">Choose a file with the open button.</string>
     <string name="choose_pair_button_tutorial">Choose your pair ID column.</string>
     <string name="columns_tutorial">Choose display columns.</string>
+
 
     <!-- Settings Strings -->
     <string name="prefs_mode">Scan Mode</string>
@@ -40,11 +43,56 @@
     <string name="color_mode">Color - Paint scanned items</string>
     <string name="match_mode">Order - Verify order of items</string>
     <string name="pair_mode">Pair - Track pairings of items</string>
+    <string name="pair_mode_setting_requirement">Pair mode cannot be used without setting a pair ID</string>
+
+    <!--    LoaderDBActivity-->
+    <string name="col_color">color</string>
+    <string name="col_scan_count">scan_count</string>
+    <string name="col_user">user</string>
+    <string name="col_note">note</string>
+    <string name="file_extension_xlsx">xlsx</string>
+    <string name="file_extension_xls">xls</string>
+    <string name="file_extension_csv">csv</string>
+    <string name="file_extension_tsv">tsv</string>
+    <string name="file_extension_txt">txt</string>
+    <string name="db_table_name">VERIFY</string>
+    <string name="db_create_table">CREATE TABLE VERIFY(</string>
+    <string name="db_table_verify">VERIFY</string>
+    <string name="db_create_table_verify">CREATE TABLE VERIFY(</string>
+    <string name="db_column_date">date DATE</string>
+    <string name="db_column_user">user TEXT</string>
+    <string name="db_column_note">note TEXT</string>
+    <string name="db_column_scan_count">scan_count INT DEFAULT 0</string>
+    <string name="db_column_color">color INT</string>
+    <string name="row_error_log">ROW ERROR</string>
+    <string name="table_name_verify">VERIFY</string>
+    <string name="log_row_error">ROW ERROR</string>
+    <!--URIHandler-->
+    <!-- getDocumentCacheDir -->
+    <string name="directory_documents">documents</string>
+
+    <!-- getLocalPath -->
+    <string name="authority_external_storage">com.android.externalstorage.documents</string>
+    <string name="document_type_primary">primary</string>
+    <string name="authority_media_documents">com.android.providers.media.documents</string>
+    <string name="authority_google_docs_storage">com.google.android.apps.docs.storage</string>
+    <string name="authority_microsoft_skydrive">com.microsoft.skydrive.content.StorageAccessProvider</string>
+    <string name="authority_downloads_documents">com.android.providers.downloads.documents</string>
+    <string name="raw_prefix">raw:</string>
+    <string name="content_uri_downloads_public">content://downloads/public_downloads</string>
+    <string name="content_uri_downloads_my">content://downloads/my_downloads</string>
+    <string name="content_uri_downloads_all">content://downloads/all_downloads</string>
+    <string name="uri_scheme_file">file</string>
+    <string name="authority_estrongs_files">com.estrongs.files</string>
+
+    <!-- getDataColumn -->
+    <string name="column_data">_data</string>
 
     <!-- Intro Strings -->
     <string name="intro_title_1">Welcome to Verify!</string>
     <string name="intro_title_2">Import a File</string>
     <string name="intro_title_3">Many modes</string>
+
 
     <string name="intro_body_1">Verify lets you import a list of entries to visualize details or manipulate your list.</string>
     <string name="intro_body_2">After you give Verify permission to access files, open the navigation drawer, choose import, select your file, and choose the column that matches your external barcodes.</string>
