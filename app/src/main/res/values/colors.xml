@@ -2,5 +2,8 @@
 <resources>
     <color name="colorPrimary">#E4624C</color>
     <color name="colorPrimaryDark">#A84937</color>
-    <color name="colorAccent">#EEC657</color>
+    <color name="colorAccent">#EEC657</color>\
+    <color name="intro_slide_color_1">#A84937</color>
+    <color name="intro_slide_color_2">#285E3D</color>
+    <color name="intro_slide_color_3">#0C6291</color>
 </resources>

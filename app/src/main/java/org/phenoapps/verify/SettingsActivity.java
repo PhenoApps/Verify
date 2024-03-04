@@ -8,11 +8,15 @@ import android.view.MenuItem;
 public class SettingsActivity extends AppCompatActivity {
 
     public static String FILE_NAME = "org.phenoapps.verify.FILE_NAME";
+    public static String INTRO_BUTTON = "org.phenoapps.verify.INTRO";
+
+    public static String ABOUT_BUTTON = "org.phenoapps.verify.ABOUT";
+
     public static String SCAN_MODE_LIST = "org.phenoapps.verify.SCAN_MODE";
     public static String AUDIO_ENABLED = "org.phenoapps.verify.AUDIO_ENABLED";
     public static String TUTORIAL_MODE = "org.phenoapps.verify.TUTORIAL_MODE";
-    public static String FIRST_NAME = "org.phenoapps.verify.FIRST_NAME";
-    public static String LAST_NAME = "org.phenoapps.verify.LAST_NAME";
+    public static String NAME = "org.phenoapps.verify.NAME";
+
     public static String LIST_KEY_NAME = "org.phenoapps.verify.LIST_KEY_NAME";
     public static String PAIR_NAME = "org.phenoapps.verify.PAIR_NAME";
     public static String DISABLE_PAIR = "org.phenoapps.verify.DISABLE_PAIR";
