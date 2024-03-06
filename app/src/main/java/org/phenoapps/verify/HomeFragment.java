@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteStatement;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -42,6 +43,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.phenoapps.verify.ViewModel.HomeViewModel;
 import org.phenoapps.verify.utilities.FileExport;
 import org.phenoapps.verify.utilities.RingUtility;
 
@@ -51,38 +53,23 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Locale;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements RingUtility {
 
 
-    final static private String line_separator = System.getProperty("line.separator");
-
-    private IdEntryDbHelper mDbHelper;
+    final static public String line_separator = System.getProperty("line.separator");
 
     private SharedPreferences.OnSharedPreferenceChangeListener mPrefListener;
 
-    //database prepared statements
-    private SQLiteStatement sqlUpdateNote;
-    private SQLiteStatement sqlDeleteId;
-    private SQLiteStatement sqlUpdateChecked;
-    private SQLiteStatement sqlUpdateUserAndDate;
-
-    private SparseArray<String> mIds;
-
     //global variable to track matching order
     private int mMatchingOrder;
-
-    private String mListId;
-
     //pair mode vars
-    private String mPairCol;
-    private String mNextPairVal;
-
     private String mFileName = "";
 
     private Toolbar navigationToolBar;
 
-    private RingUtility notification;
     private FileExport exportUtility;
+
+    private HomeViewModel homeViewModel;
 
     private View view;
     private Context context;
@@ -98,8 +85,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mIds = new SparseArray<>();
-
         this.view = view;
         context = getContext();
         activity = getActivity();
@@ -132,8 +117,6 @@ public class HomeFragment extends Fragment {
             }
         };
 
-        notification = new RingUtility(context, view, activity.getPackageName(), getResources());
-
         sharedPref.registerOnSharedPreferenceChangeListener(mPrefListener);
 
         if (!sharedPref.getBoolean("onlyLoadTutorialOnce", false)) {
@@ -152,18 +135,19 @@ public class HomeFragment extends Fragment {
 
         ActivityCompat.requestPermissions(activity, VerifyConstants.permissions, VerifyConstants.PERM_REQ);
 
-        mNextPairVal = null;
         mMatchingOrder = 0;
-        mPairCol = null;
 
         initializeUIVariables();
 
-        mDbHelper = new IdEntryDbHelper(context);
+        homeViewModel = new HomeViewModel(activity);
 
-        loadSQLToLocal();
+        homeViewModel.loadSQLToLocal();
+        buildListView();
 
-        if (mListId != null)
-            updateCheckedItems();
+        if (homeViewModel.getmListId() != null) {
+            HashSet<String> ids = homeViewModel.updateCheckedItems();
+            updateTable(ids);
+        }
 
     }
 
@@ -173,30 +157,6 @@ public class HomeFragment extends Fragment {
         // Inflate the layout for this fragment
 
         return inflater.inflate(R.layout.fragment_home, container, false);
-    }
-
-
-
-
-    private void prepareStatements() {
-
-        final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        try {
-            String updateNoteQuery = "UPDATE VERIFY SET note = ? WHERE " + mListId + " = ?";
-            sqlUpdateNote = db.compileStatement(updateNoteQuery);
-
-            String deleteIdQuery = "DELETE FROM VERIFY WHERE " + mListId + " = ?";
-            sqlDeleteId = db.compileStatement(deleteIdQuery);
-
-            String updateCheckedQuery = "UPDATE VERIFY SET color = 1 WHERE " + mListId + " = ?";
-            sqlUpdateChecked = db.compileStatement(updateCheckedQuery);
-
-            String updateUserAndDateQuery =
-                    "UPDATE VERIFY SET user = ?, date = ?, scan_count = scan_count + 1 WHERE " + mListId + " = ?";
-            sqlUpdateUserAndDate = db.compileStatement(updateUserAndDateQuery);
-        } catch(SQLiteException e) {
-            e.printStackTrace();
-        }
     }
 
     @Nullable
@@ -275,71 +235,21 @@ public class HomeFragment extends Fragment {
         String scannedId = ((EditText) view.findViewById(org.phenoapps.verify.R.id.scannerTextView))
                 .getText().toString();
 
-        if (mIds != null && mIds.size() > 0) {
+        if (homeViewModel.getmIds() != null && homeViewModel.getmIds().size() > 0) {
             //update database
             exertModeFunction(scannedId);
-
-            //view updated database
-            SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-            String table = IdEntryContract.IdEntry.TABLE_NAME;
-            String[] selectionArgs = new String[]{scannedId};
-            Cursor cursor = db.query(table, null, mListId + "=?", selectionArgs, null, null, null);
-
-            String[] headerTokens = cursor.getColumnNames();
-            StringBuilder values = new StringBuilder();
-            StringBuilder auxValues = new StringBuilder();
-            if (cursor.moveToFirst()) {
-                for (String header : headerTokens) {
-
-                    if (!header.equals(mListId)) {
-
-                        final String val = cursor.getString(
-                                cursor.getColumnIndexOrThrow(header)
-                        );
-
-                        if (header.equals("color") || header.equals("scan_count") || header.equals("date")
-                                || header.equals("user") || header.equals("note")) {
-                            if (header.equals("color")) continue;
-                            else if (header.equals("scan_count")) auxValues.append("Number of scans");
-                            else if (header.equals("date")) auxValues.append("Date");
-                            else auxValues.append(header);
-                            auxValues.append(" : ");
-                            if (val != null) auxValues.append(val);
-                            auxValues.append(line_separator);
-                        } else {
-                            values.append(header);
-                            values.append(" : ");
-                            if (val != null) values.append(val);
-                            values.append(line_separator);
-                        }
-                    }
-                }
-                cursor.close();
+            StringBuilder[] returnedData = homeViewModel.getData(scannedId);
+            StringBuilder values = returnedData[0];
+            StringBuilder auxValues = returnedData[1];
+            if (values.length() > 0 || auxValues.length() > 0) {
                 ((TextView) view.findViewById(org.phenoapps.verify.R.id.valueView)).setText(values.toString());
                 ((TextView) view.findViewById(R.id.auxValueView)).setText(auxValues.toString());
                 ((EditText) view.findViewById(R.id.scannerTextView)).setText("");
             } else {
                 if (scanMode != 2) {
-                    notification.ringNotification(false);
+                    this.ringNotification(false);
                 }
             }
-        }
-    }
-
-    private Boolean checkIdExists(String id) {
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        final String table = IdEntryContract.IdEntry.TABLE_NAME;
-        final String[] selectionArgs = new String[] { id };
-        final Cursor cursor = db.query(table, null, mListId + "=?", selectionArgs, null, null, null);
-
-        if (cursor.moveToFirst()) {
-            cursor.close();
-            return true;
-        } else {
-            cursor.close();
-            return false;
         }
     }
 
@@ -356,15 +266,7 @@ public class HomeFragment extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 String value = input.getText().toString();
                 if (!value.isEmpty()) {
-
-                    final SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                    if (sqlUpdateNote != null) {
-                        sqlUpdateNote.bindAllArgsAsStrings(new String[]{
-                                value, id
-                        });
-                        sqlUpdateNote.executeUpdateDelete();
-                    }
+                    homeViewModel.updateDb(value, id);
                 }
             }
         });
@@ -378,11 +280,10 @@ public class HomeFragment extends Fragment {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
 
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         if (scanMode == 0 ) { //default mode
             mMatchingOrder = 0;
-            notification.ringNotification(checkIdExists(id));
+            this.ringNotification(homeViewModel.checkIdExists(id));
 
         } else if (scanMode == 1) { //order mode
             final int tableIndex = getTableIndexById(id);
@@ -391,53 +292,42 @@ public class HomeFragment extends Fragment {
                 if (mMatchingOrder == tableIndex) {
                     mMatchingOrder++;
                     Toast.makeText(context, "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
-                    notification.ringNotification(true);
+                    this.ringNotification(true);
                 } else {
                     Toast.makeText(context, "Scanning out of order!", Toast.LENGTH_SHORT).show();
-                    notification.ringNotification(false);
+                    this.ringNotification(false);
                 }
             }
         } else if (scanMode == 2) { //filter mode, delete rows with given id
 
             mMatchingOrder = 0;
-            if (sqlDeleteId != null) {
-                sqlDeleteId.bindAllArgsAsStrings(new String[]{id});
-                sqlDeleteId.executeUpdateDelete();
-            }
+            homeViewModel.executeDelete(id);
             updateFilteredArrayAdapter(id);
 
         } else if (scanMode == 3) { //if color mode, update the db to highlight the item
 
             mMatchingOrder = 0;
-            if (sqlUpdateChecked != null) {
-                sqlUpdateChecked.bindAllArgsAsStrings(new String[]{id});
-                sqlUpdateChecked.executeUpdateDelete();
-            }
+            homeViewModel.executeUpdate(id);
         } else if (scanMode == 4) { //pair mode
 
             mMatchingOrder = 0;
 
+            String mPairCol = homeViewModel.getmPairCol();
+
             if (mPairCol != null) {
 
+                String mNextPairVal = homeViewModel.getmNextPairVal();
+
                 //if next pair id is waiting, check if it matches scanned id and reset mode
+                String mNextPariVal = homeViewModel.getmNextPairVal();
                 if (mNextPairVal != null) {
                     if (mNextPairVal.equals(id)) {
-                        notification.ringNotification(true);
+                        this.ringNotification(true);
                         Toast.makeText(context, "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
                     }
-                    mNextPairVal = null;
+                    homeViewModel.setmNextPairVal(null);
                 } else { //otherwise query for the current id's pair
-                    String table = IdEntryContract.IdEntry.TABLE_NAME;
-                    String[] columnsNames = new String[] { mPairCol };
-                    String selection = mListId + "=?";
-                    String[] selectionArgs = { id };
-                    Cursor cursor = db.query(table, columnsNames, selection, selectionArgs, null, null, null);
-                    if (cursor.moveToFirst()) {
-                        mNextPairVal = cursor.getString(
-                                cursor.getColumnIndexOrThrow(mPairCol)
-                        );
-                    } else mNextPairVal = null;
-                    cursor.close();
+                    homeViewModel.executeScan(id);
                 }
             }
         }
@@ -445,45 +335,16 @@ public class HomeFragment extends Fragment {
         final Calendar c = Calendar.getInstance();
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.getDefault());
 
-        if (sqlUpdateUserAndDate != null) { //no db yet
+        if (homeViewModel.getSqlUpdateUserAndDate() != null) { //no db yet
             String name = sharedPref.getString(SettingsFragment.NAME, "");
-            sqlUpdateUserAndDate.bindAllArgsAsStrings(new String[]{
-                    name,
-                    sdf.format(c.getTime()),
-                    id
-            });
-            sqlUpdateUserAndDate.executeUpdateDelete();
+            homeViewModel.executeUserUpdate(name, sdf.format(c.getTime()), id);
         }
 
-        updateCheckedItems();
+        HashSet<String> ids = homeViewModel.updateCheckedItems();
+        updateTable(ids);
     }
 
-    private synchronized void updateCheckedItems() {
-
-        final SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        //list of ideas to populate and update the view with
-        final HashSet<String> ids = new HashSet<>();
-
-        final String table = IdEntryContract.IdEntry.TABLE_NAME;
-        final String[] columns = new String[] { mListId };
-        final String selection = "color = 1";
-
-        try {
-            final Cursor cursor = db.query(table, columns, selection, null, null, null, null);
-            if (cursor.moveToFirst()) {
-                do {
-                    String id = cursor.getString(
-                            cursor.getColumnIndexOrThrow(mListId)
-                    );
-
-                    ids.add(id);
-                } while (cursor.moveToNext());
-            }
-            cursor.close();
-        } catch (SQLiteException e) {
-            e.printStackTrace();
-        }
+    private void updateTable(HashSet<String> ids){
         ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         for (int position = 0; position < idTable.getCount(); position++) {
 
@@ -492,52 +353,6 @@ public class HomeFragment extends Fragment {
             if (ids.contains(id)) {
                 idTable.setItemChecked(position, true);
             } else idTable.setItemChecked(position, false);
-        }
-    }
-
-    private synchronized void loadSQLToLocal() {
-
-        mIds = new SparseArray<>();
-
-        mDbHelper = new IdEntryDbHelper(context);
-
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        mListId = sharedPref.getString(SettingsFragment.LIST_KEY_NAME, null);
-        mPairCol = sharedPref.getString(SettingsFragment.PAIR_NAME, null);
-
-        if (mListId != null) {
-            prepareStatements();
-            loadBarcodes();
-            buildListView();
-        }
-    }
-
-    private void loadBarcodes() {
-
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        try {
-            final String table = IdEntryContract.IdEntry.TABLE_NAME;
-            final Cursor cursor = db.query(table, null, null, null, null, null, null);
-
-            if (cursor.moveToFirst()) {
-                do {
-                    final String[] headers = cursor.getColumnNames();
-                    for (String header : headers) {
-
-                        final String val = cursor.getString(
-                                cursor.getColumnIndexOrThrow(header)
-                        );
-
-                        if (header.equals(mListId)) {
-                            mIds.append(mIds.size(), val);
-                        }
-                    }
-                } while (cursor.moveToNext());
-            }
-            cursor.close();
-
-        } catch (SQLiteException e) {
-            e.printStackTrace();
         }
     }
 
@@ -640,7 +455,7 @@ public class HomeFragment extends Fragment {
             final Intent cameraIntent = new Intent(context, ScanActivity.class);
             startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
         } else if (item.getItemId() == actionExport) {
-            exportUtility = new FileExport(this.context, this.activity,this.mFileName, this.mDbHelper);
+            exportUtility = new FileExport(this.activity,this.mFileName, this.homeViewModel.getmDbHelper());
             exportUtility.askUserExportFileName();
         } else{
             return super.onOptionsItemSelected(item);
@@ -667,22 +482,23 @@ public class HomeFragment extends Fragment {
                         break;
                     case VerifyConstants.LOADER_INTENT_REQ:
 
-                        mListId = null;
-                        mPairCol = null;
+                        homeViewModel.setmListId(null);
+                        homeViewModel.setmPairCol(null);
                         mFileName = "";
 
                         if (intent.hasExtra(VerifyConstants.FILE_NAME))
                             mFileName = intent.getStringExtra(VerifyConstants.FILE_NAME);
                         if (intent.hasExtra(VerifyConstants.LIST_ID_EXTRA))
-                            mListId = intent.getStringExtra(VerifyConstants.LIST_ID_EXTRA);
+                            homeViewModel.setmListId(intent.getStringExtra(VerifyConstants.LIST_ID_EXTRA));
                         if (intent.hasExtra(VerifyConstants.PAIR_COL_EXTRA))
-                            mPairCol = intent.getStringExtra(VerifyConstants.PAIR_COL_EXTRA);
+                            homeViewModel.setmPairCol(intent.getStringExtra(VerifyConstants.PAIR_COL_EXTRA));
 
                         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
                         final SharedPreferences.Editor editor = sharedPref.edit();
 
                         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
 
+                        String mPairCol = homeViewModel.getmPairCol();
                         if (mPairCol != null) {
                             editor.putBoolean(SettingsFragment.DISABLE_PAIR, false);
                             if (scanMode != 4) showPairDialog();
@@ -698,12 +514,13 @@ public class HomeFragment extends Fragment {
                         }
                         editor.putString(SettingsFragment.FILE_NAME, mFileName);
                         editor.putString(SettingsFragment.PAIR_NAME, mPairCol);
-                        editor.putString(SettingsFragment.LIST_KEY_NAME, mListId);
+                        editor.putString(SettingsFragment.LIST_KEY_NAME, homeViewModel.getmListId());
                         editor.apply();
 
                         clearListView();
-                        loadSQLToLocal();
-                        updateCheckedItems();
+                        homeViewModel.loadSQLToLocal();
+                        HashSet<String> ids = homeViewModel.updateCheckedItems();
+                        updateTable(ids);
                         break;
                 }
 
@@ -717,13 +534,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void buildListView() {
-
         ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
         ArrayAdapter<String> idAdapter =
                 new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
-        int size = mIds.size();
+        int size = homeViewModel.getmIds().size();
+        SparseArray<String> mIds = homeViewModel.getmIds();
         for (int i = 0; i < size; i++) {
-            idAdapter.add(this.mIds.get(this.mIds.keyAt(i)));
+            idAdapter.add(mIds.get(mIds.keyAt(i)));
         }
         idTable.setAdapter(idAdapter);
     }
@@ -789,15 +606,57 @@ public class HomeFragment extends Fragment {
         }).start();
     }
 
-    /* Checks if external storage is available for read and write */
-//    static private boolean isExternalStorageWritable() {
-//        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
-//    }
-
     @Override
     final public void onDestroy() {
-        mDbHelper.close();
+        homeViewModel.getmDbHelper().close();
         super.onDestroy();
     }
 
+    @Override
+    public void ringNotification(boolean success) {
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
+
+        if(success) { //ID found
+            if(audioEnabled) {
+                try {
+                    int resID = getResources().getIdentifier("plonk", "raw", activity.getPackageName());
+                    MediaPlayer chimePlayer = MediaPlayer.create(context, resID);
+                    chimePlayer.start();
+
+                    chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        public void onCompletion(MediaPlayer mp) {
+                            mp.release();
+                        }
+                    });
+                } catch (Exception ignore) {
+                }
+            }
+        }
+
+        if(!success) { //ID not found
+            ((TextView) view.findViewById(org.phenoapps.verify.R.id.valueView)).setText("");
+
+            if (audioEnabled) {
+                if(!success) {
+                    try {
+                        int resID = getResources().getIdentifier("error", "raw", activity.getPackageName());
+                        MediaPlayer chimePlayer = MediaPlayer.create(context, resID);
+                        chimePlayer.start();
+
+                        chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            public void onCompletion(MediaPlayer mp) {
+                                mp.release();
+                            }
+                        });
+                    } catch (Exception ignore) {
+                    }
+                }
+            } else {
+                if (!success) {
+                    Toast.makeText(context, "Scanned ID not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
 }

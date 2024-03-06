@@ -33,15 +33,12 @@ import java.util.Locale;
 
 public class FileExport {
 
-    private final Context context;
-
     private final Activity activity;
     final static private String line_separator = System.getProperty("line.separator");
     private String fileName;
 
     final private IdEntryDbHelper dbHelper;
-    public FileExport(Context context, Activity activity, String fileName, IdEntryDbHelper dbHelper){
-        this.context = context;
+    public FileExport(Activity activity, String fileName, IdEntryDbHelper dbHelper){
         this.fileName = fileName;
         this.dbHelper = dbHelper;
         this.activity = activity;
@@ -50,9 +47,9 @@ public class FileExport {
 
     public synchronized void askUserExportFileName() {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Choose name for exported file.");
-        final EditText input = new EditText(context);
+        final EditText input = new EditText(activity);
 
         final Calendar c = Calendar.getInstance();
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -123,7 +120,7 @@ public class FileExport {
                     cursor.close();
                     fstream.flush();
                     fstream.close();
-                    scanFile(context, output);
+                    scanFile(activity, output);
                             /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
                                 @Override
                                 public void onScanCompleted(String path, Uri uri) {
@@ -132,22 +129,22 @@ public class FileExport {
                             });*/
                 }catch (NullPointerException npe){
                     npe.printStackTrace();
-                    Toast.makeText(context, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
                 }
                 catch (SQLiteException e) {
                     e.printStackTrace();
-                    Toast.makeText(context, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException io) {
                     io.printStackTrace();
                 }
             } else {
-                Toast.makeText(context,
+                Toast.makeText(activity,
                         "External storage not writable.", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(context,
+            Toast.makeText(activity,
                     "Must enter a file name.", Toast.LENGTH_SHORT).show();
         }
     }
@@ -161,7 +158,7 @@ public class FileExport {
         String value = fileName;
 
         if (uri == null){
-            Toast.makeText(context, "Unable to open the Specified file", Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, "Unable to open the Specified file", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -169,7 +166,7 @@ public class FileExport {
             if (isExternalStorageWritable()) {
                 try {
                     final File output = new File(uri.getPath());
-                    final OutputStream fstream = context.getContentResolver().openOutputStream(uri);
+                    final OutputStream fstream = activity.getContentResolver().openOutputStream(uri);
                     final SQLiteDatabase db = dbHelper.getReadableDatabase();
                     final String table = IdEntryContract.IdEntry.TABLE_NAME;
                     final Cursor cursor = db.query(table, null, null, null, null, null, null);
@@ -200,7 +197,7 @@ public class FileExport {
                     cursor.close();
                     fstream.flush();
                     fstream.close();
-                    scanFile(context, output);
+                    scanFile(activity, output);
                             /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
                                 @Override
                                 public void onScanCompleted(String path, Uri uri) {
@@ -209,22 +206,22 @@ public class FileExport {
                             });*/
                 }catch (NullPointerException npe){
                     npe.printStackTrace();
-                    Toast.makeText(context, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
+                    Toast.makeText(activity, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
                 }
                 catch (SQLiteException e) {
                     e.printStackTrace();
-                    Toast.makeText(context, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException io) {
                     io.printStackTrace();
                 }
             } else {
-                Toast.makeText(context,
+                Toast.makeText(activity,
                         "External storage not writable.", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(context,
+            Toast.makeText(activity,
                     "Must enter a file name.", Toast.LENGTH_SHORT).show();
         }
     }
