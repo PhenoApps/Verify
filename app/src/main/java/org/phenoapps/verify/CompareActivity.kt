@@ -1,21 +1,20 @@
 package org.phenoapps.verify
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.*
-import android.widget.EditText
 import android.widget.ImageView
-import android.widget.RadioButton
 import android.widget.RadioGroup
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.textfield.TextInputEditText
 import com.google.zxing.ResultPoint
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
-import org.phenoapps.verify.ViewModel.CompareViewModel
-import com.google.android.material.textfield.TextInputEditText
+
 
 class CompareActivity : AppCompatActivity() {
 
@@ -57,6 +56,7 @@ class CompareActivity : AppCompatActivity() {
         setContentView(R.layout.activity_compare)
 
         initializeViews()
+        loadModeFromPreferences()
         setupBarcodeScanner()
         setupRadioGroup()
         setupEditTextListeners()
@@ -79,19 +79,23 @@ class CompareActivity : AppCompatActivity() {
 
     private fun setupRadioGroup() {
         val radioGroup = findViewById<RadioGroup>(R.id.compare_radio_group)
-        val containsRadioButton = findViewById<RadioButton>(R.id.radioButton_contains)
-        val matchesRadioButton = findViewById<RadioButton>(R.id.radioButton_matches)
-
-        containsRadioButton.isChecked = true
-
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            mMode = when (checkedId) {
-                R.id.radioButton_contains -> Mode.Contains
-                R.id.radioButton_matches -> Mode.Matches
-                else -> mMode
+        radioGroup.setOnCheckedChangeListener { group: RadioGroup?, checkedId: Int ->
+            var newMode = mMode // Fallback to the current mode
+            if (checkedId == R.id.radioButton_contains) {
+                newMode = Mode.Contains
+            } else if (checkedId == R.id.radioButton_matches) {
+                newMode = Mode.Matches
             }
+            mMode = newMode
+
+            // Save the new mode to SharedPreferences
+            val sharedPref = getPreferences(MODE_PRIVATE)
+            val editor = sharedPref.edit()
+            editor.putString("compare_mode", newMode.name)
+            editor.apply()
         }
     }
+
 
     private fun setupEditTextListeners() {
         val watcher = object : TextWatcher {
@@ -128,6 +132,20 @@ class CompareActivity : AppCompatActivity() {
             firstEditText.text?.clear()
             secondEditText.text?.clear()
             imageView.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun loadModeFromPreferences() {
+        val sharedPref = getPreferences(Context.MODE_PRIVATE)
+        val defaultMode: String = Mode.Matches.name
+        val mode = sharedPref.getString("compare_mode", defaultMode)
+        mMode = Mode.valueOf(mode!!)
+
+        val radioGroup = findViewById<RadioGroup>(R.id.compare_radio_group)
+        if (mMode === Mode.Contains) {
+            radioGroup.check(R.id.radioButton_contains)
+        } else {
+            radioGroup.check(R.id.radioButton_matches)
         }
     }
 
