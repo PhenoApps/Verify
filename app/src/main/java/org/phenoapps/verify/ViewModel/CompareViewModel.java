@@ -1,4 +1,6 @@
 package org.phenoapps.verify.ViewModel;
+import android.util.Log;
+
 import androidx.lifecycle.ViewModel;
 
 public class CompareViewModel extends ViewModel {
@@ -10,6 +12,7 @@ public class CompareViewModel extends ViewModel {
     }
 
     public void setMode(Mode mode) {
+        Log.d("CompareViewModel", "Setting mode to: $mode");
         this.mMode = mode;
     }
 

@@ -27,9 +27,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".CompareActivity"
-            android:exported="true" />
+            android:configChanges="keyboardHidden|screenSize|keyboard|orientation"
+            android:windowSoftInputMode="adjustNothing"
+            android:exported="true"
+
+        />
         <activity
             android:name=".ScanActivity"
             android:exported="true" />

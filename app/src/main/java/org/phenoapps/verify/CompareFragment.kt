@@ -1,5 +1,6 @@
 package org.phenoapps.verify
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -26,7 +27,7 @@ class CompareFragment : Fragment() {
     private lateinit var barcodeScannerView: DecoratedBarcodeView
     private lateinit var firstEditText: TextInputEditText
     private lateinit var secondEditText: TextInputEditText
-//    private lateinit var firstEditText: EditText
+    //    private lateinit var firstEditText: EditText
 //    private lateinit var secondEditText: EditText
 //    private lateinit var clearButton: Button
     private lateinit var imageView: ImageView
@@ -86,6 +87,7 @@ class CompareFragment : Fragment() {
         setupBarcodeScanner()
         setupRadioGroup()
         setupImageViewListener()
+        updateImageView()
 //        setupClearButton()
 
         (activity as AppCompatActivity).supportActionBar?.title = "Compare Barcodes"
@@ -104,15 +106,39 @@ class CompareFragment : Fragment() {
 //            imageView.visibility = View.INVISIBLE
 //        }
 //    }
+    private fun saveMode(mode: CompareViewModel.Mode) {
+    val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+    with(sharedPref.edit()) {
+        putString("SAVED_MODE", mode.name)
+        apply()
+    }
+}
+
+    private fun getSavedMode(): CompareViewModel.Mode {
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE)
+        val modeName = sharedPref?.getString("SAVED_MODE", CompareViewModel.Mode.Matches.name)
+        return CompareViewModel.Mode.valueOf(modeName ?: CompareViewModel.Mode.Matches.name)
+    }
+
 
     private fun setupRadioGroup() {
         val radioGroup = view.findViewById<RadioGroup>(R.id.compare_radio_group)
-        radioGroup.check(if (viewModel.getMode() == CompareViewModel.Mode.Contains) R.id.radioButton_contains else R.id.radioButton_matches)
 
+        // Set initial checked state based on saved preferences
+        val savedMode = getSavedMode() // Implement this method to read from SharedPreferences
+        val initialCheckId = if (savedMode == CompareViewModel.Mode.Contains) R.id.radioButton_contains else R.id.radioButton_matches
+        radioGroup.check(initialCheckId)
+
+        // Listen for changes and save to preferences
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            viewModel.setMode(if (checkedId == R.id.radioButton_contains) CompareViewModel.Mode.Contains else CompareViewModel.Mode.Matches)
+            val mode = if (checkedId == R.id.radioButton_contains) CompareViewModel.Mode.Contains else CompareViewModel.Mode.Matches
+            Log.d("CompareFragment", "Mode changed to: $mode")
+            viewModel.setMode(mode)
+            saveMode(mode)
+            updateImageView() // Force update view
         }
     }
+
 
     private fun setupImageViewListener() {
         imageView.setOnClickListener {

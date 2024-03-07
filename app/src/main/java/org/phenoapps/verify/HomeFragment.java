@@ -247,7 +247,8 @@ public class HomeFragment extends Fragment implements RingUtility {
                 ((EditText) view.findViewById(R.id.scannerTextView)).setText("");
             } else {
                 if (scanMode != 2) {
-                    this.ringNotification(false);
+                    TextView textView = view.findViewById(R.id.valueView);
+                    this.ringNotification(false, textView);
                 }
             }
         }
@@ -280,10 +281,10 @@ public class HomeFragment extends Fragment implements RingUtility {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
 
-
+        TextView textView = view.findViewById(R.id.valueView);
         if (scanMode == 0 ) { //default mode
             mMatchingOrder = 0;
-            this.ringNotification(homeViewModel.checkIdExists(id));
+            this.ringNotification(homeViewModel.checkIdExists(id), textView);
 
         } else if (scanMode == 1) { //order mode
             final int tableIndex = getTableIndexById(id);
@@ -292,10 +293,10 @@ public class HomeFragment extends Fragment implements RingUtility {
                 if (mMatchingOrder == tableIndex) {
                     mMatchingOrder++;
                     Toast.makeText(context, "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
-                    this.ringNotification(true);
+                    this.ringNotification(true, textView);
                 } else {
                     Toast.makeText(context, "Scanning out of order!", Toast.LENGTH_SHORT).show();
-                    this.ringNotification(false);
+                    this.ringNotification(false, textView);
                 }
             }
         } else if (scanMode == 2) { //filter mode, delete rows with given id
@@ -322,7 +323,7 @@ public class HomeFragment extends Fragment implements RingUtility {
                 String mNextPariVal = homeViewModel.getmNextPairVal();
                 if (mNextPairVal != null) {
                     if (mNextPairVal.equals(id)) {
-                        this.ringNotification(true);
+                        this.ringNotification(true, textView);
                         Toast.makeText(context, "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
                     }
                     homeViewModel.setmNextPairVal(null);
@@ -613,7 +614,7 @@ public class HomeFragment extends Fragment implements RingUtility {
     }
 
     @Override
-    public void ringNotification(boolean success) {
+    public void ringNotification(boolean success,TextView textView) {
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
 
@@ -635,7 +636,7 @@ public class HomeFragment extends Fragment implements RingUtility {
         }
 
         if(!success) { //ID not found
-            ((TextView) view.findViewById(org.phenoapps.verify.R.id.valueView)).setText("");
+            textView.setText("");
 
             if (audioEnabled) {
                 if(!success) {
@@ -658,5 +659,10 @@ public class HomeFragment extends Fragment implements RingUtility {
                 }
             }
         }
+    }
+
+    @Override
+    public void ringNotification(boolean success) {
+
     }
 }
