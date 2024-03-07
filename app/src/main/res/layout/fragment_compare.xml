@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/fullscreenBackgroundColor"
-    android:theme="@style/ThemeOverlay.B_A_N.FullscreenContainer"
+    android:theme="@style/ThemeOverlay.Verify.FullscreenContainer"
     tools:context=".CompareFragment">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
