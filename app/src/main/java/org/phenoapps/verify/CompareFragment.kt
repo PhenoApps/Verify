@@ -27,9 +27,6 @@ class CompareFragment : Fragment() {
     private lateinit var barcodeScannerView: DecoratedBarcodeView
     private lateinit var firstEditText: TextInputEditText
     private lateinit var secondEditText: TextInputEditText
-    //    private lateinit var firstEditText: EditText
-//    private lateinit var secondEditText: EditText
-//    private lateinit var clearButton: Button
     private lateinit var imageView: ImageView
     private lateinit var viewModel: CompareViewModel
 
@@ -84,11 +81,14 @@ class CompareFragment : Fragment() {
         firstEditText.addTextChangedListener(watcher)
         secondEditText.addTextChangedListener(watcher)
 
+        val savedMode = getSavedMode()
+        viewModel.setMode(savedMode)
+
         setupBarcodeScanner()
         setupRadioGroup()
+        setupEditTextListeners()
         setupImageViewListener()
         updateImageView()
-//        setupClearButton()
 
         (activity as AppCompatActivity).supportActionBar?.title = "Compare Barcodes"
     }
@@ -99,13 +99,7 @@ class CompareFragment : Fragment() {
         barcodeScannerView.decodeContinuous(callback)
     }
 
-//    private fun setupClearButton(){
-//        clearButton.setOnClickListener{
-//            firstEditText.text.clear()
-//            secondEditText.text.clear()
-//            imageView.visibility = View.INVISIBLE
-//        }
-//    }
+
     private fun saveMode(mode: CompareViewModel.Mode) {
     val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
     with(sharedPref.edit()) {
@@ -132,13 +126,27 @@ class CompareFragment : Fragment() {
         // Listen for changes and save to preferences
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             val mode = if (checkedId == R.id.radioButton_contains) CompareViewModel.Mode.Contains else CompareViewModel.Mode.Matches
-            Log.d("CompareFragment", "Mode changed to: $mode")
             viewModel.setMode(mode)
+            Log.d("CompareFragment", "Mode changed to: $mode")
             saveMode(mode)
             updateImageView() // Force update view
         }
     }
 
+    private fun setupEditTextListeners() {
+        val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                updateImageView() // Update the ImageView based on the current text
+            }
+        }
+
+        firstEditText.addTextChangedListener(textWatcher)
+        secondEditText.addTextChangedListener(textWatcher)
+    }
 
     private fun setupImageViewListener() {
         imageView.setOnClickListener {
