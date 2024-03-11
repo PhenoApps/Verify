@@ -141,7 +141,7 @@ public class HomeFragment extends Fragment implements RingUtility {
 
         homeViewModel = new HomeViewModel(activity);
 
-        homeViewModel.loadSQLToLocal();
+        homeViewModel.loadSQLToLocal(activity);
         buildListView();
 
         if (homeViewModel.getmListId() != null) {
@@ -519,7 +519,7 @@ public class HomeFragment extends Fragment implements RingUtility {
                         editor.apply();
 
                         clearListView();
-                        homeViewModel.loadSQLToLocal();
+                        homeViewModel.loadSQLToLocal(activity);
                         HashSet<String> ids = homeViewModel.updateCheckedItems();
                         updateTable(ids);
                         break;
