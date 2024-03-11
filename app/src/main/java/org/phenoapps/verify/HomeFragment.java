@@ -473,6 +473,7 @@ public class HomeFragment extends Fragment implements RingUtility {
 
             if (intent != null) {
                 switch (requestCode) {
+
                     case VerifyConstants.PICK_CUSTOM_DEST:
                         exportUtility.writeToExportPath(intent.getData());
                         break;
@@ -522,6 +523,7 @@ public class HomeFragment extends Fragment implements RingUtility {
                         homeViewModel.loadSQLToLocal(activity);
                         HashSet<String> ids = homeViewModel.updateCheckedItems();
                         updateTable(ids);
+                        refreshData();
                         break;
                 }
 
@@ -658,6 +660,17 @@ public class HomeFragment extends Fragment implements RingUtility {
                     Toast.makeText(context, "Scanned ID not found", Toast.LENGTH_SHORT).show();
                 }
             }
+        }
+    }
+
+    private void refreshData() {
+        homeViewModel.loadSQLToLocal(activity); // Reload data
+        buildListView(); // Rebuild the list view with new data
+
+        // Optionally update any other parts of the UI that depend on the data
+        if (homeViewModel.getmListId() != null) {
+            HashSet<String> ids = homeViewModel.updateCheckedItems();
+            updateTable(ids);
         }
     }
 
