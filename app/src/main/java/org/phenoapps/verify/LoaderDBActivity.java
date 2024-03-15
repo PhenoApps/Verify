@@ -71,7 +71,7 @@ public class LoaderDBActivity extends AppCompatActivity {
         setContentView(R.layout.activity_load_file);
 
         if(getSupportActionBar() != null){
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle("Import Data");
             getSupportActionBar().getThemedContext();
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeButtonEnabled(true);
