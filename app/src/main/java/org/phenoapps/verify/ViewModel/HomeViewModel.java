@@ -23,8 +23,10 @@ import org.phenoapps.verify.IdEntryContract;
 import org.phenoapps.verify.IdEntryDbHelper;
 import org.phenoapps.verify.R;
 import org.phenoapps.verify.SettingsFragment;
+import org.phenoapps.verify.ValueModel;
 import org.phenoapps.verify.utilities.IdEntryRepository;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 public class HomeViewModel extends ViewModel {
@@ -113,7 +115,7 @@ public class HomeViewModel extends ViewModel {
         }
     }
 
-    public StringBuilder[] getData(String scannedId) {
+    public ArrayList<ValueModel>[] getData(String scannedId) {
 
         String table = IdEntryContract.IdEntry.TABLE_NAME;
         String[] selectionArgs = new String[]{scannedId};

@@ -65,7 +65,7 @@
             <ScrollView
                 android:id="@+id/scrollView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="115dp"
                 android:layout_weight="0.5"
                 android:fillViewport="true"
                 android:visibility="visible"
@@ -73,7 +73,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/valueView"
                     style="@style/Base.TextAppearance.AppCompat.Title"
                     android:layout_width="match_parent"
@@ -103,7 +103,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/scrollView">
 
-                <TextView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/auxValueView"
                     style="@style/Base.TextAppearance.AppCompat.Title"
                     android:layout_width="match_parent"

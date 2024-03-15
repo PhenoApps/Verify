@@ -22,6 +22,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.preference.PreferenceManager;
 import android.text.InputType;
@@ -49,6 +51,7 @@ import org.phenoapps.verify.utilities.RingUtility;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Locale;
@@ -67,6 +70,9 @@ public class HomeFragment extends Fragment implements RingUtility {
 
     private Toolbar navigationToolBar;
 
+    private RecyclerView valueView,auxView;
+
+    private CustomAdapter valuesAdapter, auxValuesAdapter;
     private FileExport exportUtility;
 
     private HomeViewModel homeViewModel;
@@ -178,7 +184,7 @@ public class HomeFragment extends Fragment implements RingUtility {
         }
 
         final EditText scannerTextView = ((EditText) view.findViewById(R.id.scannerTextView));
-        scannerTextView.setSelectAllOnFocus(true);
+//        scannerTextView.setSelectAllOnFocus(true);
         scannerTextView.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -198,6 +204,7 @@ public class HomeFragment extends Fragment implements RingUtility {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.d("EditText", "onItemClick: "+((TextView) view).getText().toString());
                 scannerTextView.setText(((TextView) view).getText().toString());
                 scannerTextView.setSelection(scannerTextView.getText().length());
                 scannerTextView.requestFocus();
@@ -215,8 +222,14 @@ public class HomeFragment extends Fragment implements RingUtility {
             }
         });
 
-        TextView valueView = (TextView) view.findViewById(R.id.valueView);
-        valueView.setMovementMethod(new ScrollingMovementMethod());
+        valueView = (RecyclerView) view.findViewById(R.id.valueView);
+        auxView = (RecyclerView) view.findViewById(R.id.auxValueView);
+        valueView.setLayoutManager(new LinearLayoutManager(context));
+        auxView.setLayoutManager(new LinearLayoutManager(context));
+        valuesAdapter = new CustomAdapter(new ArrayList<ValueModel>());
+        auxValuesAdapter = new CustomAdapter(new ArrayList<ValueModel>());
+        valueView.setAdapter(valuesAdapter);
+        auxView.setAdapter(auxValuesAdapter);
 
         view.findViewById(org.phenoapps.verify.R.id.clearButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -238,17 +251,17 @@ public class HomeFragment extends Fragment implements RingUtility {
         if (homeViewModel.getmIds() != null && homeViewModel.getmIds().size() > 0) {
             //update database
             exertModeFunction(scannedId);
-            StringBuilder[] returnedData = homeViewModel.getData(scannedId);
-            StringBuilder values = returnedData[0];
-            StringBuilder auxValues = returnedData[1];
-            if (values.length() > 0 || auxValues.length() > 0) {
-                ((TextView) view.findViewById(org.phenoapps.verify.R.id.valueView)).setText(values.toString());
-                ((TextView) view.findViewById(R.id.auxValueView)).setText(auxValues.toString());
-                ((EditText) view.findViewById(R.id.scannerTextView)).setText("");
+            ArrayList<ValueModel>[] returnedData = homeViewModel.getData(scannedId);
+            ArrayList<ValueModel> values = returnedData[0];
+            ArrayList<ValueModel> auxValues = returnedData[1];
+            if (values.size() > 0 || auxValues.size() > 0) {
+                valuesAdapter.values = values;
+                auxValuesAdapter.values = auxValues;
+                valuesAdapter.notifyDataSetChanged();
+                auxValuesAdapter.notifyDataSetChanged();
             } else {
                 if (scanMode != 2) {
-                    TextView textView = view.findViewById(R.id.valueView);
-                    this.ringNotification(false, textView);
+                    this.ringNotification(false);
                 }
             }
         }
@@ -281,10 +294,10 @@ public class HomeFragment extends Fragment implements RingUtility {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
 
-        TextView textView = view.findViewById(R.id.valueView);
+//        TextView textView = view.findViewById(R.id.valueView);
         if (scanMode == 0 ) { //default mode
             mMatchingOrder = 0;
-            this.ringNotification(homeViewModel.checkIdExists(id), textView);
+            this.ringNotification(homeViewModel.checkIdExists(id));
 
         } else if (scanMode == 1) { //order mode
             final int tableIndex = getTableIndexById(id);
@@ -293,10 +306,10 @@ public class HomeFragment extends Fragment implements RingUtility {
                 if (mMatchingOrder == tableIndex) {
                     mMatchingOrder++;
                     Toast.makeText(context, "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
-                    this.ringNotification(true, textView);
+                    this.ringNotification(true);
                 } else {
                     Toast.makeText(context, "Scanning out of order!", Toast.LENGTH_SHORT).show();
-                    this.ringNotification(false, textView);
+                    this.ringNotification(false);
                 }
             }
         } else if (scanMode == 2) { //filter mode, delete rows with given id
@@ -323,7 +336,7 @@ public class HomeFragment extends Fragment implements RingUtility {
                 String mNextPariVal = homeViewModel.getmNextPairVal();
                 if (mNextPairVal != null) {
                     if (mNextPairVal.equals(id)) {
-                        this.ringNotification(true, textView);
+                        this.ringNotification(true);
                         Toast.makeText(context, "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
                     }
                     homeViewModel.setmNextPairVal(null);
@@ -616,7 +629,7 @@ public class HomeFragment extends Fragment implements RingUtility {
     }
 
     @Override
-    public void ringNotification(boolean success,TextView textView) {
+    public void ringNotification(boolean success) {
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
 
@@ -638,7 +651,7 @@ public class HomeFragment extends Fragment implements RingUtility {
         }
 
         if(!success) { //ID not found
-            textView.setText("");
+//            textView.setText("");
 
             if (audioEnabled) {
                 if(!success) {
@@ -672,10 +685,5 @@ public class HomeFragment extends Fragment implements RingUtility {
             HashSet<String> ids = homeViewModel.updateCheckedItems();
             updateTable(ids);
         }
-    }
-
-    @Override
-    public void ringNotification(boolean success) {
-
     }
 }

@@ -13,9 +13,8 @@ import org.phenoapps.verify.SettingsFragment;
 
 public interface RingUtility {
 
-    public void ringNotification(boolean success, TextView textView);
-
     public void ringNotification(boolean success);
+
 
 
 }

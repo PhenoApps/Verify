@@ -8,10 +8,13 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.SparseArray;
 
 
+import org.apache.poi.ss.formula.functions.Value;
 import org.phenoapps.verify.HomeFragment;
 import org.phenoapps.verify.IdEntryContract;
 import org.phenoapps.verify.IdEntryDbHelper;
+import org.phenoapps.verify.ValueModel;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 public class IdEntryRepository {
@@ -54,12 +57,12 @@ public class IdEntryRepository {
         return ids;
     }
 
-    public StringBuilder[] fetchEntries(String table, String listId, String[] selectionArgs) {
+    public ArrayList<ValueModel>[] fetchEntries(String table, String listId, String[] selectionArgs) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(table, null, listId + "=?", selectionArgs, null, null, null);
         String[] headerTokens = cursor.getColumnNames();
-        StringBuilder values = new StringBuilder();
-        StringBuilder auxValues = new StringBuilder();
+        ArrayList<ValueModel> values = new ArrayList<ValueModel>();
+        ArrayList<ValueModel> auxValues = new ArrayList<ValueModel>();
 
         if (cursor.moveToFirst()) {
             for( String header:headerTokens) {
@@ -71,25 +74,28 @@ public class IdEntryRepository {
 
                     if (header.equals("color") || header.equals("scan_count") || header.equals("date")
                             || header.equals("user") || header.equals("note")) {
+                        ValueModel auxModel = new ValueModel();
                         if (header.equals("color")) continue;
-                        else if (header.equals("scan_count")) auxValues.append("Number of scans");
-                        else if (header.equals("date")) auxValues.append("Date");
-                        else auxValues.append(header);
-                        auxValues.append(" : ");
-                        if (val != null) auxValues.append(val);
-                        auxValues.append(HomeFragment.line_separator);
+                        else if (header.equals("scan_count")) auxModel.setPrefix("Number of scans");
+                        else if (header.equals("date")) auxModel.setPrefix("Date");
+                        else auxModel.setPrefix(header);
+                        if (val != null) auxModel.setValue(val);
+                        auxValues.add(auxModel);
                     } else {
-                        values.append(header);
-                        values.append(" : ");
-                        if (val != null) values.append(val);
-                        values.append(HomeFragment.line_separator);
+                        ValueModel model = new ValueModel();
+                        model.setPrefix(header);
+                        if(val != null){
+                            model.setValue(val);
+                        }
+                        values.add(model);
                     }
                 }
             }
 
         }
         cursor.close();
-        return new StringBuilder[]{values, auxValues};
+        ArrayList<ValueModel>[] returnResult = new ArrayList[]{values, auxValues};
+        return returnResult;
 
     }
 
