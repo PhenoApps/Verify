@@ -72,6 +72,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final long BACK_PRESS_INTERVAL = 2000; // 2 seconds
+    private long lastBackPressTime = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -154,4 +157,29 @@ public class MainActivity extends AppCompatActivity {
             copyRawToVerify(verifyDirectory, "verify_pair_sample.csv", R.raw.verify_pair_sample);
         }
     }
+
+    @Override
+    public void onBackPressed() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavDestination currentDestination = navController.getCurrentDestination();
+
+        if (currentDestination != null &&
+                (currentDestination.getId() == R.id.Settings || currentDestination.getId() == R.id.Compare)) {
+            // Navigate to the Home fragment
+            navController.navigate(R.id.Home);
+        } else if (currentDestination != null && currentDestination.getId() == R.id.Home) {
+            // Handle the back button for the Home fragment
+            if (this.lastBackPressTime + BACK_PRESS_INTERVAL > System.currentTimeMillis()) {
+                super.onBackPressed();
+                return;
+            } else {
+                Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+            }
+            this.lastBackPressTime = System.currentTimeMillis();
+        } else {
+            // Handle other cases or call the super method
+            super.onBackPressed();
+        }
+    }
+
 }

@@ -1,5 +1,7 @@
 package org.phenoapps.verify;
 
+import static androidx.core.app.ActivityCompat.startActivityForResult;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,6 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -47,6 +50,7 @@ import android.widget.Toast;
 
 import org.phenoapps.verify.ViewModel.HomeViewModel;
 import org.phenoapps.verify.utilities.FileExport;
+import org.phenoapps.verify.utilities.IntentHelper;
 import org.phenoapps.verify.utilities.RingUtility;
 
 import java.io.File;
@@ -56,7 +60,7 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Locale;
 
-public class HomeFragment extends Fragment implements RingUtility {
+public class HomeFragment extends Fragment implements RingUtility, IntentHelper {
 
 
     final static public String line_separator = System.getProperty("line.separator");
@@ -72,6 +76,9 @@ public class HomeFragment extends Fragment implements RingUtility {
 
     private RecyclerView valueView,auxView;
 
+    private int selectedIndex = -1; // -1 means no item is selected
+    private ArrayAdapter<String> idAdapter;
+
     private CustomAdapter valuesAdapter, auxValuesAdapter;
     private FileExport exportUtility;
 
@@ -86,7 +93,10 @@ public class HomeFragment extends Fragment implements RingUtility {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        PreferenceManager.setDefaultValues(getActivity(), R.xml.preferences, false);
+
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -109,10 +119,8 @@ public class HomeFragment extends Fragment implements RingUtility {
             auxValue.setVisibility(View.GONE);
         }
 
-        mPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-
+        mPrefListener = (sharedPreferences, key) -> {
+            if (SettingsFragment.AUX_INFO.equals(key)) {
                 if (sharedPreferences.getBoolean(SettingsFragment.AUX_INFO, false)) {
                     auxInfo.setVisibility(View.VISIBLE);
                     auxValue.setVisibility(View.VISIBLE);
@@ -120,10 +128,14 @@ public class HomeFragment extends Fragment implements RingUtility {
                     auxInfo.setVisibility(View.GONE);
                     auxValue.setVisibility(View.GONE);
                 }
+            } else if (SettingsFragment.AUDIO_ENABLED.equals(key)) {
+                boolean audioEnabled = sharedPreferences.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
+                // Do something with the audioEnabled variable if needed
             }
         };
 
         sharedPref.registerOnSharedPreferenceChangeListener(mPrefListener);
+
 
         if (!sharedPref.getBoolean("onlyLoadTutorialOnce", false)) {
             launchIntro();
@@ -204,6 +216,8 @@ public class HomeFragment extends Fragment implements RingUtility {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectedIndex = position; // Update the selected index
+                idAdapter.notifyDataSetChanged(); // Notify adapter to refresh the view
                 Log.d("EditText", "onItemClick: "+((TextView) view).getText().toString());
                 scannerTextView.setText(((TextView) view).getText().toString());
                 scannerTextView.setSelection(scannerTextView.getText().length());
@@ -240,32 +254,40 @@ public class HomeFragment extends Fragment implements RingUtility {
     }
 
     private synchronized void checkScannedItem() {
-
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
         int scanMode = Integer.valueOf(sharedPref.getString(SettingsFragment.SCAN_MODE_LIST, "-1"));
-        boolean displayAux = sharedPref.getBoolean(SettingsFragment.AUX_INFO, true);
 
-        String scannedId = ((EditText) view.findViewById(org.phenoapps.verify.R.id.scannerTextView))
-                .getText().toString();
+        String scannedId = ((EditText) view.findViewById(R.id.scannerTextView)).getText().toString();
 
-        if (homeViewModel.getmIds() != null && homeViewModel.getmIds().size() > 0) {
-            //update database
+        if (!scannedId.isEmpty() && homeViewModel.getmIds() != null && homeViewModel.getmIds().size() > 0) {
             exertModeFunction(scannedId);
             ArrayList<ValueModel>[] returnedData = homeViewModel.getData(scannedId);
             ArrayList<ValueModel> values = returnedData[0];
             ArrayList<ValueModel> auxValues = returnedData[1];
+
             if (values.size() > 0 || auxValues.size() > 0) {
                 valuesAdapter.values = values;
                 auxValuesAdapter.values = auxValues;
                 valuesAdapter.notifyDataSetChanged();
                 auxValuesAdapter.notifyDataSetChanged();
             } else {
+                clearRecyclerViews();
                 if (scanMode != 2) {
                     this.ringNotification(false);
                 }
             }
+        } else {
+            clearRecyclerViews();
         }
     }
+
+    private void clearRecyclerViews() {
+        valuesAdapter.values.clear();
+        auxValuesAdapter.values.clear();
+        valuesAdapter.notifyDataSetChanged();
+        auxValuesAdapter.notifyDataSetChanged();
+    }
+
 
     private synchronized void insertNoteIntoDb(@NonNull final String id) {
 
@@ -388,18 +410,28 @@ public class HomeFragment extends Fragment implements RingUtility {
     }
 
     private void updateFilteredArrayAdapter(String id) {
+        ListView idTable = (ListView) view.findViewById(R.id.idTable);
 
-        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
-        //update id table array adapter
-        final ArrayAdapter<String> updatedAdapter = new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
-        final int oldSize = idTable.getAdapter().getCount();
+        // Save the top item's index and top position
+        int index = idTable.getFirstVisiblePosition();
+        View v = idTable.getChildAt(0);
+        int top = (v == null) ? 0 : (v.getTop() - idTable.getPaddingTop());
 
+        // Update id table array adapter
+        ArrayAdapter<String> updatedAdapter = new ArrayAdapter<>(context, R.layout.row);
+        int oldSize = idTable.getAdapter().getCount();
         for (int i = 0; i < oldSize; i++) {
-            final String temp = (String) idTable.getAdapter().getItem(i);
-            if (!temp.equals(id)) updatedAdapter.add(temp);
+            String temp = (String) idTable.getAdapter().getItem(i);
+            if (!temp.equals(id)) {
+                updatedAdapter.add(temp);
+            }
         }
         idTable.setAdapter(updatedAdapter);
+
+        // Restore the list view's position
+        idTable.setSelectionFromTop(index, top);
     }
+
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -407,7 +439,7 @@ public class HomeFragment extends Fragment implements RingUtility {
         inflater.inflate(org.phenoapps.verify.R.menu.activity_main_toolbar, menu);
     }
 
-        @Override
+    @Override
     final public boolean onOptionsItemSelected(MenuItem item) {
         int actionCamera = R.id.action_camera;
         int actionImport = R.id.action_import;
@@ -470,7 +502,7 @@ public class HomeFragment extends Fragment implements RingUtility {
             startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
         } else if (item.getItemId() == actionExport) {
             exportUtility = new FileExport(this.activity,this.mFileName, this.homeViewModel.getmDbHelper());
-            exportUtility.askUserExportFileName();
+            exportUtility.askUserExportFileName(this);
         } else{
             return super.onOptionsItemSelected(item);
         }
@@ -550,9 +582,28 @@ public class HomeFragment extends Fragment implements RingUtility {
     }
 
     private void buildListView() {
-        ListView idTable = (ListView) view.findViewById(org.phenoapps.verify.R.id.idTable);
-        ArrayAdapter<String> idAdapter =
-                new ArrayAdapter<>(context, org.phenoapps.verify.R.layout.row);
+        ListView idTable = (ListView) view.findViewById(R.id.idTable);
+
+        idAdapter = new ArrayAdapter<String>(context, android.R.layout.simple_list_item_1, android.R.id.text1) {
+
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = view.findViewById(android.R.id.text1);
+
+                // Here, apply the logic to determine if the item is selected
+                if (position == selectedIndex) { // Check if the current item is selected
+                    textView.setBackgroundColor(ContextCompat.getColor(context, R.color.colorAccent));
+                } else {
+                    textView.setBackgroundColor(ContextCompat.getColor(context, android.R.color.transparent));
+                }
+
+                return view;
+            }
+        };
+
+        // Add data to the adapter
         int size = homeViewModel.getmIds().size();
         SparseArray<String> mIds = homeViewModel.getmIds();
         for (int i = 0; i < size; i++) {
@@ -560,6 +611,7 @@ public class HomeFragment extends Fragment implements RingUtility {
         }
         idTable.setAdapter(idAdapter);
     }
+
 
     private void clearListView() {
 
@@ -624,57 +676,43 @@ public class HomeFragment extends Fragment implements RingUtility {
 
     @Override
     final public void onDestroy() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPref.unregisterOnSharedPreferenceChangeListener(mPrefListener);
         homeViewModel.getmDbHelper().close();
         super.onDestroy();
     }
 
     @Override
     public void ringNotification(boolean success) {
-        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-        final boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+        PreferenceManager.setDefaultValues(context, R.xml.preferences, false);
+        boolean audioEnabled = sharedPref.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
 
-        if(success) { //ID found
-            if(audioEnabled) {
-                try {
-                    int resID = getResources().getIdentifier("plonk", "raw", activity.getPackageName());
-                    MediaPlayer chimePlayer = MediaPlayer.create(context, resID);
-                    chimePlayer.start();
-
-                    chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        public void onCompletion(MediaPlayer mp) {
-                            mp.release();
-                        }
-                    });
-                } catch (Exception ignore) {
-                }
-            }
-        }
-
-        if(!success) { //ID not found
-//            textView.setText("");
-
+        if (success) {
             if (audioEnabled) {
-                if(!success) {
-                    try {
-                        int resID = getResources().getIdentifier("error", "raw", activity.getPackageName());
-                        MediaPlayer chimePlayer = MediaPlayer.create(context, resID);
-                        chimePlayer.start();
-
-                        chimePlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            public void onCompletion(MediaPlayer mp) {
-                                mp.release();
-                            }
-                        });
-                    } catch (Exception ignore) {
-                    }
-                }
+                playSound("plonk");
+            }
+        } else {
+            // Optionally handle the failure case, such as playing a different sound
+            if (audioEnabled) {
+                playSound("error");
             } else {
-                if (!success) {
-                    Toast.makeText(context, "Scanned ID not found", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(context, "Scanned ID not found", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
+    private void playSound(String soundResourceName) {
+        try {
+            int resID = getResources().getIdentifier(soundResourceName, "raw", activity.getPackageName());
+            MediaPlayer chimePlayer = MediaPlayer.create(context, resID);
+            chimePlayer.start();
+            chimePlayer.setOnCompletionListener(MediaPlayer::release);
+        } catch (Exception e) {
+            Log.e("HomeFragment", "Error playing sound", e);
+        }
+    }
+
 
     private void refreshData() {
         homeViewModel.loadSQLToLocal(activity); // Reload data
@@ -685,5 +723,10 @@ public class HomeFragment extends Fragment implements RingUtility {
             HashSet<String> ids = homeViewModel.updateCheckedItems();
             updateTable(ids);
         }
+    }
+
+    @Override
+    public void startIntent(Intent i) {
+        startActivityForResult(Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST, null);
     }
 }

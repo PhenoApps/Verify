@@ -15,6 +15,8 @@ import android.os.Environment;
 import android.text.InputType;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.util.Log;
+
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -45,7 +47,7 @@ public class FileExport {
     }
 
 
-    public synchronized void askUserExportFileName() {
+    public synchronized void askUserExportFileName(IntentHelper helper) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setTitle("Choose name for exported file.");
@@ -72,7 +74,7 @@ public class FileExport {
                     i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                     i.setType("*/*");
                     i.putExtra(Intent.EXTRA_TITLE, value+".csv");
-                    startActivityForResult(activity,Intent.createChooser(i, "Choose folder to export file."), VerifyConstants.PICK_CUSTOM_DEST, null);
+                    helper.startIntent(i);
                 }else{
                     writeToExportPath();
                 }
@@ -81,7 +83,7 @@ public class FileExport {
         builder.show();
     }
 
-    public void writeToExportPath(){
+    public void writeToExportPath() {
         String value = fileName;
 
         if (!value.isEmpty()) {
@@ -93,138 +95,126 @@ public class FileExport {
                     final SQLiteDatabase db = dbHelper.getReadableDatabase();
                     final String table = IdEntryContract.IdEntry.TABLE_NAME;
                     final Cursor cursor = db.query(table, null, null, null, null, null, null);
-                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
 
-                    //first write header line
+                    if(cursor.getCount() == 0) {
+                        Log.e("FileExport", "No data to export");
+                        Toast.makeText(activity, "No data available for export", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // first write header line
                     final String[] headers = cursor.getColumnNames();
                     for (int i = 0; i < headers.length; i++) {
                         if (i != 0) fstream.write(",".getBytes());
                         fstream.write(headers[i].getBytes());
                     }
                     fstream.write(line_separator.getBytes());
-                    //populate text file with current database values
-                    if (cursor.moveToFirst()) {
-                        do {
-                            for (int i = 0; i < headers.length; i++) {
-                                if (i != 0) fstream.write(",".getBytes());
-                                final String val = cursor.getString(
-                                        cursor.getColumnIndexOrThrow(headers[i])
-                                );
-                                if (val == null) fstream.write("null".getBytes());
-                                else fstream.write(val.getBytes());
-                            }
-                            fstream.write(line_separator.getBytes());
-                        } while (cursor.moveToNext());
+
+                    // populate text file with current database values
+                    while (cursor.moveToNext()) {
+                        for (int i = 0; i < headers.length; i++) {
+                            if (i != 0) fstream.write(",".getBytes());
+                            final String val = cursor.getString(
+                                    cursor.getColumnIndexOrThrow(headers[i])
+                            );
+                            if (val == null) fstream.write("null".getBytes());
+                            else fstream.write(val.getBytes());
+                        }
+                        fstream.write(line_separator.getBytes());
                     }
 
                     cursor.close();
                     fstream.flush();
                     fstream.close();
                     scanFile(activity, output);
-                            /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                                @Override
-                                public void onScanCompleted(String path, Uri uri) {
-                                    Log.v("scan complete", path);
-                                }
-                            });*/
-                }catch (NullPointerException npe){
-                    npe.printStackTrace();
-                    Toast.makeText(activity, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
-                }
-                catch (SQLiteException e) {
+                } catch (SQLiteException e) {
                     e.printStackTrace();
                     Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
+                    Toast.makeText(activity, "Error creating file", Toast.LENGTH_SHORT).show();
                 } catch (IOException io) {
                     io.printStackTrace();
+                    Toast.makeText(activity, "Error writing to file", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity,
-                        "External storage not writable.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "External storage not writable.", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(activity,
-                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Must enter a file name.", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     public static void scanFile(Context ctx, File filePath) {
         MediaScannerConnection.scanFile(ctx, new String[] { filePath.getAbsolutePath()}, null, null);
     }
 
-    public void writeToExportPath(Uri uri){
-
+    public void writeToExportPath(Uri uri) {
         String value = fileName;
 
-        if (uri == null){
-            Toast.makeText(activity, "Unable to open the Specified file", Toast.LENGTH_LONG).show();
+        if (uri == null) {
+            Toast.makeText(activity, "Unable to open the specified file", Toast.LENGTH_LONG).show();
             return;
         }
 
         if (!value.isEmpty()) {
             if (isExternalStorageWritable()) {
                 try {
-                    final File output = new File(uri.getPath());
                     final OutputStream fstream = activity.getContentResolver().openOutputStream(uri);
                     final SQLiteDatabase db = dbHelper.getReadableDatabase();
                     final String table = IdEntryContract.IdEntry.TABLE_NAME;
                     final Cursor cursor = db.query(table, null, null, null, null, null, null);
-                    //final Cursor cursor = db.rawQuery("SElECT * FROM VERIFY", null);
 
-                    //first write header line
+                    if(cursor.getCount() == 0) {
+                        Log.e("FileExport", "No data to export");
+                        Toast.makeText(activity, "No data available for export", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // first write header line
                     final String[] headers = cursor.getColumnNames();
                     for (int i = 0; i < headers.length; i++) {
                         if (i != 0) fstream.write(",".getBytes());
                         fstream.write(headers[i].getBytes());
                     }
                     fstream.write(line_separator.getBytes());
-                    //populate text file with current database values
-                    if (cursor.moveToFirst()) {
-                        do {
-                            for (int i = 0; i < headers.length; i++) {
-                                if (i != 0) fstream.write(",".getBytes());
-                                final String val = cursor.getString(
-                                        cursor.getColumnIndexOrThrow(headers[i])
-                                );
-                                if (val == null) fstream.write("null".getBytes());
-                                else fstream.write(val.getBytes());
-                            }
-                            fstream.write(line_separator.getBytes());
-                        } while (cursor.moveToNext());
+
+                    // populate text file with current database values
+                    while (cursor.moveToNext()) {
+                        for (int i = 0; i < headers.length; i++) {
+                            if (i != 0) fstream.write(",".getBytes());
+                            final String val = cursor.getString(
+                                    cursor.getColumnIndexOrThrow(headers[i])
+                            );
+                            if (val == null) fstream.write("null".getBytes());
+                            else fstream.write(val.getBytes());
+                        }
+                        fstream.write(line_separator.getBytes());
                     }
 
                     cursor.close();
                     fstream.flush();
                     fstream.close();
-                    scanFile(activity, output);
-                            /*MediaScannerConnection.scanFile(getContext(), new String[] {output.toString()}, null, new MediaScannerConnection.OnScanCompletedListener() {
-                                @Override
-                                public void onScanCompleted(String path, Uri uri) {
-                                    Log.v("scan complete", path);
-                                }
-                            });*/
-                }catch (NullPointerException npe){
-                    npe.printStackTrace();
-                    Toast.makeText(activity, "Error in opening the Specified file", Toast.LENGTH_LONG).show();
-                }
-                catch (SQLiteException e) {
+                    scanFile(activity, new File(uri.getPath()));
+                } catch (SQLiteException e) {
                     e.printStackTrace();
                     Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
+                    Toast.makeText(activity, "Error creating file", Toast.LENGTH_SHORT).show();
                 } catch (IOException io) {
                     io.printStackTrace();
+                    Toast.makeText(activity, "Error writing to file", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity,
-                        "External storage not writable.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, "External storage not writable.", Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(activity,
-                    "Must enter a file name.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, "Must enter a file name.", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     static private boolean isExternalStorageWritable() {
         return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
