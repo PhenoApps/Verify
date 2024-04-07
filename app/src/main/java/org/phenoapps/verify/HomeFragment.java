@@ -74,12 +74,12 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     private Toolbar navigationToolBar;
 
-    private RecyclerView valueView,auxView;
+    private RecyclerView valueView;
 
     private int selectedIndex = -1; // -1 means no item is selected
     private ArrayAdapter<String> idAdapter;
 
-    private CustomAdapter valuesAdapter, auxValuesAdapter;
+    private CustomAdapter valuesAdapter;
     private FileExport exportUtility;
 
     private HomeViewModel homeViewModel;
@@ -107,26 +107,20 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
 
-        final View auxInfo = view.findViewById(R.id.auxScrollView);
-        final View auxValue = view.findViewById(R.id.auxValueView);
+        valuesAdapter = new CustomAdapter(new ArrayList<ValueModel>());
 
         if (sharedPref.getBoolean(SettingsFragment.AUX_INFO, false)) {
-            auxInfo.setVisibility(View.VISIBLE);
-            auxValue.setVisibility(View.VISIBLE);
-
+            valuesAdapter.setAuxValues(true);
         } else {
-            auxInfo.setVisibility(View.GONE);
-            auxValue.setVisibility(View.GONE);
+            valuesAdapter.setAuxValues(false);
         }
 
         mPrefListener = (sharedPreferences, key) -> {
             if (SettingsFragment.AUX_INFO.equals(key)) {
                 if (sharedPreferences.getBoolean(SettingsFragment.AUX_INFO, false)) {
-                    auxInfo.setVisibility(View.VISIBLE);
-                    auxValue.setVisibility(View.VISIBLE);
+                    valuesAdapter.setAuxValues(true);
                 } else {
-                    auxInfo.setVisibility(View.GONE);
-                    auxValue.setVisibility(View.GONE);
+                    valuesAdapter.setAuxValues(false);
                 }
             } else if (SettingsFragment.AUDIO_ENABLED.equals(key)) {
                 boolean audioEnabled = sharedPreferences.getBoolean(SettingsFragment.AUDIO_ENABLED, true);
@@ -237,13 +231,8 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
         });
 
         valueView = (RecyclerView) view.findViewById(R.id.valueView);
-        auxView = (RecyclerView) view.findViewById(R.id.auxValueView);
         valueView.setLayoutManager(new LinearLayoutManager(context));
-        auxView.setLayoutManager(new LinearLayoutManager(context));
-        valuesAdapter = new CustomAdapter(new ArrayList<ValueModel>());
-        auxValuesAdapter = new CustomAdapter(new ArrayList<ValueModel>());
         valueView.setAdapter(valuesAdapter);
-        auxView.setAdapter(auxValuesAdapter);
 
         view.findViewById(org.phenoapps.verify.R.id.clearButton).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -261,15 +250,11 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
         if (!scannedId.isEmpty() && homeViewModel.getmIds() != null && homeViewModel.getmIds().size() > 0) {
             exertModeFunction(scannedId);
-            ArrayList<ValueModel>[] returnedData = homeViewModel.getData(scannedId);
-            ArrayList<ValueModel> values = returnedData[0];
-            ArrayList<ValueModel> auxValues = returnedData[1];
+            ArrayList<ValueModel> values = homeViewModel.getData(scannedId);
 
-            if (values.size() > 0 || auxValues.size() > 0) {
+            if (values.size() > 0) {
                 valuesAdapter.values = values;
-                auxValuesAdapter.values = auxValues;
                 valuesAdapter.notifyDataSetChanged();
-                auxValuesAdapter.notifyDataSetChanged();
             } else {
                 clearRecyclerViews();
                 if (scanMode != 2) {
@@ -283,9 +268,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     private void clearRecyclerViews() {
         valuesAdapter.values.clear();
-        auxValuesAdapter.values.clear();
         valuesAdapter.notifyDataSetChanged();
-        auxValuesAdapter.notifyDataSetChanged();
     }
 
 
@@ -493,7 +476,6 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
                             });
 
                             fileBuilder.show();
-
                         }
                     });
             builder.show();
@@ -503,7 +485,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
         } else if (item.getItemId() == actionExport) {
             exportUtility = new FileExport(this.activity,this.mFileName, this.homeViewModel.getmDbHelper());
             exportUtility.askUserExportFileName(this);
-        } else{
+        } else {
             return super.onOptionsItemSelected(item);
         }
         return true;

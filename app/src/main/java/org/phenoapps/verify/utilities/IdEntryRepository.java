@@ -57,12 +57,11 @@ public class IdEntryRepository {
         return ids;
     }
 
-    public ArrayList<ValueModel>[] fetchEntries(String table, String listId, String[] selectionArgs) {
+    public ArrayList<ValueModel> fetchEntries(String table, String listId, String[] selectionArgs) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(table, null, listId + "=?", selectionArgs, null, null, null);
         String[] headerTokens = cursor.getColumnNames();
         ArrayList<ValueModel> values = new ArrayList<ValueModel>();
-        ArrayList<ValueModel> auxValues = new ArrayList<ValueModel>();
 
         if (cursor.moveToFirst()) {
             for( String header:headerTokens) {
@@ -80,7 +79,8 @@ public class IdEntryRepository {
                         else if (header.equals("date")) auxModel.setPrefix("Date");
                         else auxModel.setPrefix(header);
                         if (val != null) auxModel.setValue(val);
-                        auxValues.add(auxModel);
+                        auxModel.setAuxValue(true);
+                        values.add(auxModel);
                     } else {
                         ValueModel model = new ValueModel();
                         model.setPrefix(header);
@@ -91,12 +91,9 @@ public class IdEntryRepository {
                     }
                 }
             }
-
         }
         cursor.close();
-        ArrayList<ValueModel>[] returnResult = new ArrayList[]{values, auxValues};
-        return returnResult;
-
+        return values;
     }
 
     public String scanDb(String table, String[] columnsNames, String selection, String[] selectionArgs, String mPairCol) {

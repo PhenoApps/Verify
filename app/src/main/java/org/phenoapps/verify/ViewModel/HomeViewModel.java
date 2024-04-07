@@ -115,7 +115,7 @@ public class HomeViewModel extends ViewModel {
         }
     }
 
-    public ArrayList<ValueModel>[] getData(String scannedId) {
+    public ArrayList<ValueModel> getData(String scannedId) {
 
         String table = IdEntryContract.IdEntry.TABLE_NAME;
         String[] selectionArgs = new String[]{scannedId};

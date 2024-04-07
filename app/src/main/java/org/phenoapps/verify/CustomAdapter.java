@@ -14,6 +14,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
 
     ArrayList<ValueModel> values;
+    boolean auxValues = false;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView textView;
@@ -28,6 +29,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
         public TextView getTextView() {
             return textView;
         }
+    }
+
+    public void setAuxValues(boolean auxValues) {
+        this.auxValues = auxValues;
     }
 
     public CustomAdapter(ArrayList<ValueModel> fieldValues){
@@ -46,7 +51,11 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CustomAdapter.ViewHolder holder, int position) {
-        holder.getTextView().setText( values.get(position).getPrefix() +" : "+values.get(position).getValue());
+        ValueModel value = values.get(position);
+        if(value.getAuxValue() && !this.auxValues){
+            return;
+        }
+        holder.getTextView().setText( value.getPrefix() +" : "+value.getValue());
     }
 
     @Override
