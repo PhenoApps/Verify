@@ -217,7 +217,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         i.setType("*/*");
         startActivityForResult(
-                Intent.createChooser(i, "Choose file to import."),
+                Intent.createChooser(i, getString(R.string.choose_file_to_import)),
                 VerifyConstants.DEFAULT_CONTENT_REQ);
     }
 
@@ -270,11 +270,11 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     private synchronized void insertNoteIntoDb(@NonNull final String id) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Enter a note for the given item.");
+        builder.setTitle(R.string.insert_note_title);
         final EditText input = new EditText(context);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
-        builder.setPositiveButton("Save", (dialog, which) -> {
+        builder.setPositiveButton(R.string.save, (dialog, which) -> {
             String value = input.getText().toString();
             if (!value.isEmpty()) homeViewModel.updateDb(value, id);
         });
@@ -293,10 +293,10 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
             if (tableIndex != -1) {
                 if (mMatchingOrder == tableIndex) {
                     mMatchingOrder++;
-                    Toast.makeText(context, "Order matches id: " + id + " at index: " + tableIndex, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, getString(R.string.order_matches, id, tableIndex), Toast.LENGTH_SHORT).show();
                     this.ringNotification(true);
                 } else {
-                    Toast.makeText(context, "Scanning out of order!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.scanning_out_of_order, Toast.LENGTH_SHORT).show();
                     this.ringNotification(false);
                 }
             }
@@ -315,7 +315,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
                 if (mNextPairVal != null) {
                     if (mNextPairVal.equals(id)) {
                         this.ringNotification(true);
-                        Toast.makeText(context, "Scanned paired item: " + id, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, getString(R.string.scanned_paired_item, id), Toast.LENGTH_SHORT).show();
                     }
                     homeViewModel.setmNextPairVal(null);
                 } else {
@@ -425,7 +425,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
                     }
                     if (mPairCol == null && scanMode == 4) {
                         editor.putString(SettingsFragment.SCAN_MODE_LIST, "0");
-                        Toast.makeText(context, "Switching to default mode, no pair ID found.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.switching_to_default_mode, Toast.LENGTH_SHORT).show();
                     }
                     editor.putString(SettingsFragment.FILE_NAME, mFileName);
                     editor.putString(SettingsFragment.PAIR_NAME, mPairCol);
@@ -483,12 +483,12 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     private void showPairDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Pair column selected, would you like to switch to Pair mode?");
-        builder.setPositiveButton("Yes", (dialog, which) -> {
+        builder.setTitle(R.string.pair_mode_dialog_title);
+        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
             SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
             sharedPref.edit().putString(SettingsFragment.SCAN_MODE_LIST, "4").apply();
         });
-        builder.setNegativeButton("No thanks", null);
+        builder.setNegativeButton(R.string.no_thanks, null);
         builder.show();
     }
 
@@ -513,7 +513,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
             if (audioEnabled) playSound("plonk");
         } else {
             if (audioEnabled) playSound("error");
-            else Toast.makeText(context, "Scanned ID not found", Toast.LENGTH_SHORT).show();
+            else Toast.makeText(context, R.string.scanned_id_not_found, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -539,7 +539,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     @Override
     public void startIntent(Intent i) {
-        startActivityForResult(Intent.createChooser(i, "Choose folder to export file."),
+        startActivityForResult(Intent.createChooser(i, getString(R.string.choose_folder_to_export)),
                 VerifyConstants.PICK_CUSTOM_DEST, null);
     }
 }

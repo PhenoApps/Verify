@@ -22,6 +22,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import org.phenoapps.verify.IdEntryContract;
 import org.phenoapps.verify.IdEntryDbHelper;
+import org.phenoapps.verify.R;
 import org.phenoapps.verify.VerifyConstants;
 
 import java.io.File;
@@ -50,7 +51,7 @@ public class FileExport {
     public synchronized void askUserExportFileName(IntentHelper helper) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        builder.setTitle("Choose name for exported file.");
+        builder.setTitle(R.string.export_choose_filename_title);
         final EditText input = new EditText(activity);
 
         final Calendar c = Calendar.getInstance();
@@ -64,7 +65,7 @@ public class FileExport {
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        builder.setPositiveButton("Export", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.export_button, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int which) {
                 String value = input.getText().toString();
@@ -98,7 +99,7 @@ public class FileExport {
 
                     if(cursor.getCount() == 0) {
                         Log.e("FileExport", "No data to export");
-                        Toast.makeText(activity, "No data available for export", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, R.string.export_no_data, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -129,19 +130,19 @@ public class FileExport {
                     scanFile(activity, output);
                 } catch (SQLiteException e) {
                     e.printStackTrace();
-                    Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_table_empty, Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                    Toast.makeText(activity, "Error creating file", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_creating_file, Toast.LENGTH_SHORT).show();
                 } catch (IOException io) {
                     io.printStackTrace();
-                    Toast.makeText(activity, "Error writing to file", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_writing_file, Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "External storage not writable.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, R.string.export_storage_not_writable, Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(activity, "Must enter a file name.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, R.string.export_must_enter_filename, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -154,7 +155,7 @@ public class FileExport {
         String value = fileName;
 
         if (uri == null) {
-            Toast.makeText(activity, "Unable to open the specified file", Toast.LENGTH_LONG).show();
+            Toast.makeText(activity, R.string.export_unable_to_open_file, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -168,7 +169,7 @@ public class FileExport {
 
                     if(cursor.getCount() == 0) {
                         Log.e("FileExport", "No data to export");
-                        Toast.makeText(activity, "No data available for export", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, R.string.export_no_data, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -199,19 +200,19 @@ public class FileExport {
                     scanFile(activity, new File(uri.getPath()));
                 } catch (SQLiteException e) {
                     e.printStackTrace();
-                    Toast.makeText(activity, "Error exporting file, is your table empty?", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_table_empty, Toast.LENGTH_SHORT).show();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                    Toast.makeText(activity, "Error creating file", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_creating_file, Toast.LENGTH_SHORT).show();
                 } catch (IOException io) {
                     io.printStackTrace();
-                    Toast.makeText(activity, "Error writing to file", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, R.string.export_error_writing_file, Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(activity, "External storage not writable.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(activity, R.string.export_storage_not_writable, Toast.LENGTH_SHORT).show();
             }
         } else {
-            Toast.makeText(activity, "Must enter a file name.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(activity, R.string.export_must_enter_filename, Toast.LENGTH_SHORT).show();
         }
     }
 

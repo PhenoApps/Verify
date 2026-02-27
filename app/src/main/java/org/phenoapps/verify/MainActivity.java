@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
                 super.onBackPressed();
                 return;
             } else {
-                Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.press_back_to_exit, Toast.LENGTH_SHORT).show();
             }
             this.lastBackPressTime = System.currentTimeMillis();
         } else {
