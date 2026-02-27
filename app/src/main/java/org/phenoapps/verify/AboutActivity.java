@@ -2,28 +2,38 @@ package org.phenoapps.verify;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 
-import com.danielstone.materialaboutlibrary.ConvenienceBuilder;
 import com.danielstone.materialaboutlibrary.MaterialAboutActivity;
+import com.danielstone.materialaboutlibrary.ConvenienceBuilder;
 import com.danielstone.materialaboutlibrary.items.MaterialAboutActionItem;
 import com.danielstone.materialaboutlibrary.items.MaterialAboutTitleItem;
 import com.danielstone.materialaboutlibrary.model.MaterialAboutCard;
 import com.danielstone.materialaboutlibrary.model.MaterialAboutList;
 
+import android.content.Context;
+import android.net.Uri;
+import android.view.View;
+
+import androidx.core.content.ContextCompat;
+
 public class AboutActivity extends MaterialAboutActivity {
 
-
-    private CircularProgressDrawable progress;
-    private MaterialAboutActionItem updateCheckItem;
-
-
-
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Apply bottom/side insets for edge-to-edge (MaterialAboutActivity handles the toolbar top inset)
+        View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(bars.left, 0, bars.right, bars.bottom);
+            return insets;
+        });
+        androidx.core.view.ViewCompat.requestApplyInsets(rootView);
+    }
 
     @NonNull
     @Override
@@ -31,53 +41,69 @@ public class AboutActivity extends MaterialAboutActivity {
 
         MaterialAboutCard.Builder appCardBuilder = new MaterialAboutCard.Builder();
 
-        appCardBuilder.addItem(new MaterialAboutTitleItem.Builder().text("CheckList").icon(R.mipmap.ic_launcher).build());
+        appCardBuilder.addItem(new MaterialAboutTitleItem.Builder()
+                .text(getString(R.string.app_name))
+                .icon(R.mipmap.ic_launcher)
+                .build());
 
         appCardBuilder.addItem(ConvenienceBuilder.createVersionActionItem(this,
-                getResources().getDrawable(R.drawable.ic_about),
+                ContextCompat.getDrawable(this, R.drawable.ic_about),
                 "Version",
                 false));
+
+        appCardBuilder.addItem(ConvenienceBuilder.createWebsiteActionItem(context,
+                ContextCompat.getDrawable(this, R.drawable.ic_about),
+                "GitHub",
+                false,
+                Uri.parse("https://github.com/PhenoApps/Verify")));
 
         MaterialAboutCard.Builder authorCardBuilder = new MaterialAboutCard.Builder();
         authorCardBuilder.title("Developers");
 
         authorCardBuilder.addItem(new MaterialAboutActionItem.Builder()
                 .text(getString(R.string.dev_chaney))
-                .subText("\t\t"+getString(R.string.ksu))
+                .subText(getString(R.string.ksu))
                 .icon(R.drawable.ic_person_profile)
                 .build());
+
         authorCardBuilder.addItem(new MaterialAboutActionItem.Builder()
                 .text(getString(R.string.dev_trevor))
-                .subText("\t\t"+getString(R.string.ksu)+"\n\t\t"+getString(R.string.dev_trevor_email))
+                .subText(getString(R.string.ksu) + "\n" + getString(R.string.dev_trevor_email))
                 .icon(R.drawable.ic_person_profile)
                 .build());
+
         authorCardBuilder.addItem(new MaterialAboutActionItem.Builder()
                 .text(getString(R.string.dev_jesse))
-                .subText("\t\t"+getString(R.string.ksu)+"\n\t\t"+getString(R.string.dev_jesse_email)+
-                        "\n\t\t"+"http://wheatgenetics.org")
+                .subText(getString(R.string.ksu) + "\n" + getString(R.string.dev_jesse_email))
                 .icon(R.drawable.ic_person_profile)
                 .build());
 
         MaterialAboutCard.Builder descriptionCard = new MaterialAboutCard.Builder();
         descriptionCard.title("Description");
         descriptionCard.addItem(new MaterialAboutActionItem.Builder()
-                .text("Verify is an Android application that imports a list of entries, scans barcodes, and " +
-                        "identifies whether it exists in the list of entries along with audio/visual notifications.").build());
+                .text("Verify imports a list of entries, scans barcodes, and identifies whether " +
+                        "each entry exists in the list with audio/visual notifications.")
+                .build());
 
-        return new MaterialAboutList(appCardBuilder.build(),authorCardBuilder.build(), descriptionCard.build());
+        MaterialAboutCard.Builder otherAppsCard = new MaterialAboutCard.Builder();
+        otherAppsCard.title("PhenoApps");
+        otherAppsCard.addItem(ConvenienceBuilder.createWebsiteActionItem(context,
+                ContextCompat.getDrawable(this, R.drawable.ic_about),
+                "PhenoApps.org",
+                false,
+                Uri.parse("http://phenoapps.org/")));
+
+        return new MaterialAboutList(
+                appCardBuilder.build(),
+                authorCardBuilder.build(),
+                descriptionCard.build(),
+                otherAppsCard.build());
     }
 
     @Nullable
     @Override
     protected CharSequence getActivityTitle() {
-        return "About";
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        progress = new CircularProgressDrawable(this);
-        progress.setStyle(CircularProgressDrawable.DEFAULT);
-        progress.start();
+        return getString(R.string.about);
     }
 }
+

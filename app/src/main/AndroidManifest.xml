@@ -14,12 +14,13 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".AboutActivity"
-            android:theme="@style/AppTheme.MaterialAboutActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:theme="@style/AppTheme.MaterialAboutActivity" />
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|screenSize|keyboard|orientation"
             android:exported="true"
+            android:theme="@style/AppThemeNoActionBar"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,17 +32,18 @@
         <activity
             android:name=".CompareActivity"
             android:configChanges="keyboardHidden|screenSize|keyboard|orientation"
-            android:windowSoftInputMode="adjustNothing"
             android:exported="true"
-
-        />
+            android:theme="@style/AppThemeNoActionBar"
+            android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".ScanActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:theme="@style/AppThemeNoActionBar" />
         <activity
             android:name=".LoaderDBActivity"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
-            android:exported="true" />
+            android:exported="true"
+            android:theme="@style/AppThemeNoActionBar" />
         <activity
             android:name=".SettingsActivity"
             android:exported="true" />

@@ -6,11 +6,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import org.phenoapps.verify.utilities.InsetHandler;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -66,9 +69,16 @@ public class LoaderDBActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_load_file);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        View rootView = findViewById(android.R.id.content);
+        InsetHandler.INSTANCE.setupStandardInsets(rootView, toolbar);
 
         if(getSupportActionBar() != null){
             getSupportActionBar().setTitle("Import Data");

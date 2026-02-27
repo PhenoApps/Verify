@@ -3,10 +3,14 @@ package org.phenoapps.verify;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
+import org.phenoapps.verify.utilities.InsetHandler;
 
 import com.google.zxing.ResultPoint;
 
@@ -51,9 +55,17 @@ public class ScanActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
         setContentView(org.phenoapps.verify.R.layout.activity_capture);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        View rootView = findViewById(android.R.id.content);
+        InsetHandler.INSTANCE.setupStandardInsets(rootView, toolbar);
+
         barcodeScannerView = (DecoratedBarcodeView)
                 findViewById(org.phenoapps.verify.R.id.zxing_barcode_scanner);
         barcodeScannerView.getBarcodeView().getCameraSettings().setContinuousFocusEnabled(true);

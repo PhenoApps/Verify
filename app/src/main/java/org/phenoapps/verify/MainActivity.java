@@ -17,6 +17,7 @@ import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.preference.PreferenceManager;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -37,6 +38,8 @@ import androidx.navigation.NavDestination;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import org.phenoapps.verify.utilities.InsetHandler;
 
 import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
@@ -78,13 +81,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
 
-        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_toolbar);;
+        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupWithNavController(bottomNavigationView, navController);
+
+        View rootView = findViewById(android.R.id.content);
+        InsetHandler.INSTANCE.setupInsetsWithBottomNav(rootView, toolbar, bottomNavigationView);
     }
 
 

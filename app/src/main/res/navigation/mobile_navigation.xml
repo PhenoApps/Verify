@@ -8,18 +8,18 @@
     <fragment
         android:id="@+id/Home"
         android:name="org.phenoapps.verify.HomeFragment"
-        android:label="Home"
+        android:label=""
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/Compare"
         android:name="org.phenoapps.verify.CompareFragment"
-        android:label="Compare"
+        android:label=""
         tools:layout="@layout/activity_compare" />
 
     <fragment
         android:id="@+id/Settings"
         android:name="org.phenoapps.verify.SettingsFragment"
-        android:label="Settings"
+        android:label=""
         />
 </navigation>

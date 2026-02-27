@@ -11,12 +11,8 @@ import androidx.preference.Preference;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import java.util.prefs.Preferences;
-
 public class SettingsFragment extends PreferenceFragmentCompat {
 
-
-    public static final CharSequence INTRO_BUTTON = "org.phenoapps.verify.INTRO";
     public static final CharSequence ABOUT_BUTTON = "org.phenoapps.verify.ABOUT";
     public static String FILE_NAME = "org.phenoapps.verify.FILE_NAME";
     public static String SCAN_MODE_LIST = "org.phenoapps.verify.SCAN_MODE";
@@ -28,16 +24,9 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     public static String DISABLE_PAIR = "org.phenoapps.verify.DISABLE_PAIR";
     public static String AUX_INFO = "org.phenoapps.verify.AUX_INFO";
 
-
-    private void showChangeLog() {
-
-    }
-    private void showAboutDialog(Context ctx)
-    {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            Intent i = new Intent(getContext(), AboutActivity.class);
-            startActivity(i);
-        }
+    private void showAboutDialog(Context ctx) {
+        Intent i = new Intent(getContext(), AboutActivity.class);
+        startActivity(i);
     }
 
     @Override
@@ -54,7 +43,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         final SharedPreferences sharedPrefs = super.getPreferenceManager().getSharedPreferences();
         ListPreference mode = findPreference(SCAN_MODE_LIST);
-        Preference introButton = findPreference(INTRO_BUTTON);
         Preference aboutButton = findPreference(ABOUT_BUTTON);
 
         aboutButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -67,21 +55,6 @@ public class SettingsFragment extends PreferenceFragmentCompat {
             }
         });
 
-        introButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                    final Intent intro_intent = new Intent(getContext(), IntroActivity.class);
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            startActivity(intro_intent);
-                        }
-                    });
-                }
-                return true;
-            }
-        });
         mode.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             //check if Pair mode is chosen, if it's disabled then show a message and switch
             //back to default mode.

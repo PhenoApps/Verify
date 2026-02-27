@@ -4,12 +4,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 36
     defaultConfig {
         applicationId "org.phenoapps.verify"
-        minSdkVersion 16
-        targetSdkVersion 34
+        minSdkVersion 23
+        targetSdkVersion 36
         versionCode 2
         versionName "2"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -21,24 +20,20 @@ android {
         release {
             shrinkResources false
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/dependencies.txt'
-        exclude 'META-INF/LGPL2.1'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES.txt', 'META-INF/LICENSE.txt', 'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'META-INF/LICENSE', 'META-INF/DEPENDENCIES', 'META-INF/notice.txt', 'META-INF/license.txt', 'META-INF/dependencies.txt', 'META-INF/LGPL2.1']
+        }
     }
     compileOptions {
         targetCompatibility 1.8
         sourceCompatibility 1.8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
     buildFeatures {
         viewBinding true
@@ -47,28 +42,30 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.core:core-ktx:1.17.0'
+    implementation 'androidx.activity:activity-ktx:1.12.4'
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'com.journeyapps:zxing-android-embedded:3.6.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
+    implementation 'androidx.vectordrawable:vectordrawable:1.2.0'
     implementation 'com.github.apl-devs:appintro:v4.2.0'
-    implementation "androidx.navigation:navigation-fragment-ktx:2.7.7"
-    implementation 'androidx.preference:preference-ktx:1.1.1'
-    implementation "androidx.navigation:navigation-ui-ktx:2.7.7"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.9.7"
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation "androidx.navigation:navigation-ui-ktx:2.9.7"
     testImplementation 'junit:junit:4.13.2'
     implementation files('libs/poi-3.12-android-a.jar')
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.9.7")
     implementation files('libs/poi-ooxml-schemas-3.12-20150511-a.jar')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.10"
+    implementation 'com.google.android.material:material:1.13.0'
     implementation 'com.github.daniel-stoneuk:material-about-library:3.1.2'
-    implementation "androidx.lifecycle:lifecycle-viewmodel:2.3.1"
-    implementation 'com.google.android.material:material:1.4.0'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
+    implementation 'com.google.android.material:material:1.13.0'
 }
 repositories {
     mavenCentral()
