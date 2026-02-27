@@ -37,10 +37,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -177,7 +180,32 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
         valueView.setLayoutManager(new LinearLayoutManager(context));
         valueView.setAdapter(valuesAdapter);
 
-        view.findViewById(R.id.clearButton).setOnClickListener(v -> scannerTextView.setText(""));
+        // Search end button: shows barcode icon when empty, clear icon when text is present
+        ImageButton searchEndButton = view.findViewById(R.id.searchEndButton);
+        scannerTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    searchEndButton.setImageResource(R.drawable.ic_clear);
+                } else {
+                    searchEndButton.setImageResource(R.drawable.barcode_scan);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+        searchEndButton.setOnClickListener(v -> {
+            if (scannerTextView.getText().length() > 0) {
+                scannerTextView.setText("");
+            } else {
+                final Intent cameraIntent = new Intent(context, ScanActivity.class);
+                startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
+            }
+        });
 
         // Import FAB — goes straight to SAF
         FloatingActionButton importFab = view.findViewById(R.id.importFab);
@@ -351,11 +379,7 @@ public class HomeFragment extends Fragment implements RingUtility, IntentHelper 
 
     @Override
     final public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_camera) {
-            final Intent cameraIntent = new Intent(context, ScanActivity.class);
-            startActivityForResult(cameraIntent, VerifyConstants.CAMERA_INTENT_REQ);
-            return true;
-        } else if (item.getItemId() == R.id.action_export) {
+        if (item.getItemId() == R.id.action_export) {
             launchSafExport();
             return true;
         }

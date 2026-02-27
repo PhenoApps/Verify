@@ -4,7 +4,7 @@
     >
     <item
         android:id="@+id/action_import"
-        android:icon="@drawable/ic_import_white"
+        android:icon="@drawable/ic_import"
         android:title="Import"
         app:showAsAction="ifRoom" />
 
@@ -13,10 +13,4 @@
         android:icon="@drawable/ic_export"
         android:title="Export"
         app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/action_camera"
-        android:icon="@drawable/ic_barcode_scan"
-        android:title="@string/action_camera"
-        app:showAsAction="ifRoom"/>
 </menu>
