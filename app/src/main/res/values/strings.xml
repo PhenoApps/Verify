@@ -41,17 +41,25 @@
     <string name="about">About</string>
     <string name="versiontitle">Version</string>
     <string name="dev_trevor">Trevor Rife</string>
-    <string name="ksu">Kansas State University</string>
+    <string name="clemson">Clemson University</string>
     <string name="dev_chaney">Chaney Courtney</string>
-    <string name="dev_trevor_email">trife@ksu.edu</string>
+    <string name="dev_trevor_email">twrife@clemson.edu</string>
     <string name="dev_jesse">Jesse Poland</string>
     <string name="dev_jesse_email">jpoland@ksu.edu</string>
     <string name="wg_site">http://wheatgenetics.org\n</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="contains">Contains</string>
+
+    <!-- About page card strings (matching Coordinate naming) -->
+    <string name="about_version_title">Version</string>
+    <string name="about_github_title">GitHub</string>
+    <string name="about_project_lead_title">Project Lead</string>
+    <string name="about_email_title">Email</string>
+    <string name="about_contributors_title">Contributors</string>
+    <string name="about_contributors_developers_title">Contributors</string>
+    <string name="about_contributors_funding_title">Funding</string>
+    <string name="about_technical_title">Technical Details</string>
+    <string name="about_title_pheno_apps">PhenoApps</string>
+        <string name="contains">Contains</string>
     <string name="matches">Matches</string>
+    <string name="about_rate">Rate this app</string>
 
 </resources>

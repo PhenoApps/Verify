@@ -15,7 +15,7 @@
         <activity
             android:name=".AboutActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.MaterialAboutActivity" />
+            android:theme="@style/AppThemeNoActionBar" />
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|screenSize|keyboard|orientation"
