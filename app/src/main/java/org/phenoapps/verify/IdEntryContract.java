@@ -6,12 +6,12 @@ import android.provider.BaseColumns;
  * Created by Chaney on 7/13/2017.
  */
 
-final class IdEntryContract {
+public final class IdEntryContract {
 
     private IdEntryContract() {}
 
-    static class IdEntry implements BaseColumns {
-        static final String TABLE_NAME = "VERIFY";
+    public static class IdEntry implements BaseColumns {
+        public static final String TABLE_NAME = "VERIFY";
         static final String COLUMN_NAME_ID = "id";
         static final String COLUMN_NAME_CHECKED = "checked";
         static final String COLUMN_NAME_SCANNED = "scanned";

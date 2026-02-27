@@ -25,6 +25,8 @@
     <string name="match_mode">Order - Verify order of items</string>
     <string name="pair_mode">Pair - Track pairings of items</string>
 
+    
+
     <!-- Intro Strings -->
     <string name="intro_title_1">Welcome to Verify!</string>
     <string name="intro_title_2">Import a File</string>
@@ -39,11 +41,59 @@
     <string name="about">About</string>
     <string name="versiontitle">Version</string>
     <string name="dev_trevor">Trevor Rife</string>
-    <string name="ksu">Kansas State University</string>
+    <string name="clemson">Clemson University</string>
     <string name="dev_chaney">Chaney Courtney</string>
-    <string name="dev_trevor_email">trife@ksu.edu</string>
+    <string name="dev_trevor_email">twrife@clemson.edu</string>
     <string name="dev_jesse">Jesse Poland</string>
     <string name="dev_jesse_email">jpoland@ksu.edu</string>
     <string name="wg_site">http://wheatgenetics.org\n</string>
+
+    <!-- About page card strings (matching Coordinate naming) -->
+    <string name="about_version_title">Version</string>
+    <string name="about_github_title">GitHub</string>
+    <string name="about_project_lead_title">Project Lead</string>
+    <string name="about_email_title">Email</string>
+    <string name="about_contributors_title">Contributors</string>
+    <string name="about_contributors_developers_title">Contributors</string>
+    <string name="about_contributors_funding_title">Funding</string>
+    <string name="about_technical_title">Technical Details</string>
+    <string name="about_title_pheno_apps">PhenoApps</string>
+        <string name="contains">Contains</string>
+    <string name="matches">Matches</string>
+    <string name="about_rate">Rate this app</string>
+
+    <!-- Export Strings -->
+    <string name="export_choose_filename_title">Choose name for exported file.</string>
+    <string name="export_button">Export</string>
+    <string name="export_no_data">No data available for export</string>
+    <string name="export_error_table_empty">Error exporting file, is your table empty?</string>
+    <string name="export_error_creating_file">Error creating file</string>
+    <string name="export_error_writing_file">Error writing to file</string>
+    <string name="export_storage_not_writable">External storage not writable.</string>
+    <string name="export_must_enter_filename">Must enter a file name.</string>
+    <string name="export_unable_to_open_file">Unable to open the specified file</string>
+
+    <!-- Import / Loader Strings -->
+    <string name="import_data">Import Data</string>
+    <string name="file_read_error">There was a problem reading this file.</string>
+    <string name="import_file_extension_required">Imported file must have an extension. (e.g: .csv, .tsv)</string>
+    <string name="error_reading_file">Error reading file.</string>
+
+    <!-- Home Fragment Strings -->
+    <string name="insert_note_title">Enter a note for the given item.</string>
+    <string name="save">Save</string>
+    <string name="order_matches">Order matches id: %1$s at index: %2$d</string>
+    <string name="scanning_out_of_order">Scanning out of order!</string>
+    <string name="scanned_paired_item">Scanned paired item: %s</string>
+    <string name="switching_to_default_mode">Switching to default mode, no pair ID found.</string>
+    <string name="scanned_id_not_found">Scanned ID not found</string>
+    <string name="choose_file_to_import">Choose file to import.</string>
+    <string name="choose_folder_to_export">Choose folder to export file.</string>
+    <string name="pair_mode_dialog_title">Pair column selected, would you like to switch to Pair mode?</string>
+    <string name="yes">Yes</string>
+    <string name="no_thanks">No thanks</string>
+
+    <!-- Navigation / General Strings -->
+    <string name="press_back_to_exit">Press back again to exit</string>
 
 </resources>

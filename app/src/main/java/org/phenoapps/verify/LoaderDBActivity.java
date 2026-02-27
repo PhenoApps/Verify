@@ -6,11 +6,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import org.phenoapps.verify.utilities.InsetHandler;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -66,12 +69,19 @@ public class LoaderDBActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_load_file);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        View rootView = findViewById(android.R.id.content);
+        InsetHandler.INSTANCE.setupStandardInsets(rootView, toolbar);
+
         if(getSupportActionBar() != null){
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle(R.string.import_data);
             getSupportActionBar().getThemedContext();
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeButtonEnabled(true);
@@ -96,7 +106,7 @@ public class LoaderDBActivity extends AppCompatActivity {
         mFileUri = getIntent().getData();
 
         if (mFileUri == null ){
-            Toast.makeText(this, "There was a problem reading this file", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.file_read_error, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -109,7 +119,7 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         //if unsupported file type, start delimiter tutorial
         if (mDelimiter == null || mHeader == null) {
-            Toast.makeText(this, "There was a problem reading this file.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.file_read_error, Toast.LENGTH_LONG).show();
             finish();
            /* if (mHeader == null) {
                 tutorialText.setText("Error reading file.");
@@ -135,7 +145,7 @@ public class LoaderDBActivity extends AppCompatActivity {
             int lastDot = mFilePath.lastIndexOf("."); // changed from mFileUri to mFilePath due to the files in download folder have URI without extension
 
             if (lastDot == -1) {
-                Toast.makeText(this, "Imported file must have an extension. (e.g: .csv, .tsv)", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.import_file_extension_required, Toast.LENGTH_LONG).show();
                 finish();
             }
 
@@ -489,7 +499,7 @@ public class LoaderDBActivity extends AppCompatActivity {
 
         if (mHeader == null) {
             headerList.setAdapter(new ArrayAdapter<String>(this, org.phenoapps.verify.R.layout.row));
-            tutorialText.setText("Error reading file.");
+            tutorialText.setText(R.string.error_reading_file);
             return;
         }
 
@@ -503,7 +513,7 @@ public class LoaderDBActivity extends AppCompatActivity {
             headerList.setAdapter(idAdapter);
         } else {
             headerList.setAdapter(new ArrayAdapter<String>(this, org.phenoapps.verify.R.layout.row));
-            tutorialText.setText("Error reading file.");
+            tutorialText.setText(R.string.error_reading_file);
         }
     }
 
